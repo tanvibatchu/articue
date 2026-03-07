@@ -36,21 +36,14 @@ export interface SpeechRecognitionErrorEvent extends Event {
 export type SpeechRecognition = SpeechRecognitionInstance;
 
 function getSpeechRecognition(): new () => SpeechRecognitionInstance {
-  if (typeof window === "undefined") {
-    throw new Error("Speech recognition is only available in the browser");
-  }
+  if (typeof window === "undefined") throw new Error("Speech recognition is only available in the browser");
   const Klass = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-  if (!Klass) {
-    throw new Error("SpeechRecognition is not supported in this browser");
-  }
+  if (!Klass) throw new Error("SpeechRecognition is not supported in this browser");
   return Klass;
 }
 
-/**
- * Starts listening for speech and invokes onResult with the best transcript and confidence.
- * Returns the recognition instance so the caller can stop it.
- * lang: en-CA, interimResults: false, maxAlternatives: 3.
- */
+let _lastRecognition: SpeechRecognition | null = null;
+
 export function startListening(
   onResult: (transcript: string, confidence: number) => void,
   onError: (error: string) => void
@@ -58,26 +51,21 @@ export function startListening(
   try {
     const Recognition = getSpeechRecognition();
     const recognition = new Recognition();
+    _lastRecognition = recognition;
     recognition.lang = "en-CA";
     recognition.continuous = true;
     recognition.interimResults = false;
     recognition.maxAlternatives = 3;
-
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const result = event.results[event.resultIndex];
       const item = result.isFinal ? result[0] : result[result.length - 1];
       const transcript = (item?.transcript ?? "").trim();
       const confidence = typeof item?.confidence === "number" ? item.confidence : 0;
-      if (transcript) {
-        onResult(transcript, confidence);
-      }
+      if (transcript) onResult(transcript, confidence);
     };
-
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      const msg = event.message ?? event.error ?? "Speech recognition error";
-      onError(String(msg));
+      onError(String(event.message ?? event.error ?? "Speech recognition error"));
     };
-
     recognition.start();
     return recognition;
   } catch (err) {
@@ -87,17 +75,8 @@ export function startListening(
   }
 }
 
-/**
- * Stops the given recognition instance.
- */
-export function stopListening(recognition: SpeechRecognition): void {
-  try {
-    recognition.stop();
-  } catch {
-    try {
-      recognition.abort();
-    } catch {
-      // ignore
-    }
-  }
+export function stopListening(recognition?: SpeechRecognition): void {
+  const r = recognition ?? _lastRecognition;
+  if (!r) return;
+  try { r.stop(); } catch { try { r.abort(); } catch { } }
 }
