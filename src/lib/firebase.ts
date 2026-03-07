@@ -71,7 +71,7 @@ export async function getSessions(
     orderBy('date', 'desc')
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data() as SessionData);
+  return snap.docs.map((d: any) => d.data() as SessionData);
 }
 
 export async function getAllSessions(
@@ -80,7 +80,7 @@ export async function getAllSessions(
   const ref = collection(db, 'users', userId, 'sessions');
   const q = query(ref, orderBy('date', 'desc'));
   const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data() as SessionData);
+  return snap.docs.map((d: any) => d.data() as SessionData);
 }
 
 export async function updateStreak(userId: string): Promise<number> {

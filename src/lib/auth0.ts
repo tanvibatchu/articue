@@ -1,9 +1,12 @@
-// Auth0 utility functions
-// Provides getCurrentUser() and requireUser() for authentication checks
-// Used by API routes and server components
 import { Auth0Client } from '@auth0/nextjs-auth0/server';
 
-const auth0 = new Auth0Client();
+export const auth0 = new Auth0Client({
+  domain: process.env.AUTH0_DOMAIN!,
+  clientId: process.env.AUTH0_CLIENT_ID!,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+  secret: process.env.AUTH0_SECRET!,
+  appBaseUrl: process.env.AUTH0_BASE_URL!,
+});
 
 export async function getCurrentUser() {
   const session = await auth0.getSession();

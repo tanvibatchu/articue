@@ -14,7 +14,7 @@ export function startSession(userId: string, sound: string): Session {
   return {
     userId,
     sound,
-    startedAt: new Date().toISOString(),
+    startTime: Date.now(),
     attempts: [],
   };
 }
@@ -38,7 +38,7 @@ export async function endSession(
   _userId: string
 ): Promise<{ xpEarned: number; sessionData: SessionData }> {
   const durationMs =
-    new Date().getTime() - new Date(session.startedAt).getTime();
+    new Date().getTime() - new Date(session.startTime).getTime();
   const durationSeconds = Math.round(durationMs / 1000);
   const attempts = session.attempts;
   const averageAccuracy =
