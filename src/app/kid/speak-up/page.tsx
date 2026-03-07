@@ -122,8 +122,7 @@ export default function SpeakUpPage() {
                     setPhase("waiting");
                 }
             },
-            () => { setPhase("waiting"); setNovaState("idle"); },
-            words[index]?.word.toLowerCase()
+            () => { setPhase("waiting"); setNovaState("idle"); }
         );
     }
 

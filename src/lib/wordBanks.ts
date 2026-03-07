@@ -1,10 +1,12 @@
-/**
- * Word banks for target sounds (R, S, TH, L) and fluency phrases. Each entry has word + emoji.
- * Import: wordBanks
- */
-
-import type { SoundWordBank, WordBanksMap } from "@/types";
-
+import type { SoundWordBank, WordBanksMap, WordBankEntry } from "@/types";
+export type TargetSound = "r" | "s" | "th" | "l" | "fluency";
+export type WordEntry = WordBankEntry;
+export function getSessionWords(sound: TargetSound, count: number): WordEntry[] {
+  const key = sound === "fluency" ? "Fluency" : sound.toUpperCase();
+  const bank = wordBanks[key as keyof typeof wordBanks];
+  const all = bank ? [...bank.initial, ...bank.medial, ...bank.final] : [];
+  return all.sort(() => Math.random() - 0.5).slice(0, count);
+}
 export const wordBanks: WordBanksMap = {
   R: {
     initial: [

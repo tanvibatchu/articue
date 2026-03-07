@@ -84,8 +84,7 @@ export default function BlendItPage() {
                 setPhase("analyzing");
                 handleTranscript(transcript);
             },
-            () => setPhase("waiting"),
-            words[index]?.word
+            () => setPhase("waiting")
         );
     }
 
