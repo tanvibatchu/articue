@@ -10,7 +10,7 @@ import CelebrationBurst from "@/components/CelebrationBurst";
 import XPCounter from "@/components/XPCounter";
 import StreakBadge from "@/components/StreakBadge";
 import SessionSummary from "@/components/SessionSummary";
-import { analyzePhoneme, PhonemeResult } from "@/lib/gemini";
+import type { PhonemeResult } from "@/lib/gemini";
 import { speakAsNova, demonstrateWord } from "@/lib/elevenlabs";
 import { startListening, stopListening } from "@/lib/speechCapture";
 import { getSessionWords, TargetSound, WordEntry } from "@/lib/wordBanks";
@@ -71,7 +71,7 @@ export default function PracticePage() {
             setNovaState("thinking"); setPhase("demonstrating");
         }
         greet();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phase]);
     useEffect(() => {
         if (phase !== "demonstrating" || words.length === 0) return;
@@ -80,7 +80,7 @@ export default function PracticePage() {
             setNovaState("idle"); setPhase("waiting");
         }
         demo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phase]);
     function handleMicStart() {
         if (phase !== "waiting") return;
@@ -95,7 +95,18 @@ export default function PracticePage() {
     }
     async function handleTranscript(transcript: string) {
         const cur = words[wordIndex]; setNovaState("thinking");
-        const result = await analyzePhoneme({ word: cur.word, transcript, targetSound: activeSound, age: profile?.age ?? 6 });
+        const res = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ word: cur.word, transcript, targetSound: activeSound, age: profile?.age ?? 6 }),
+        });
+        const raw = await res.json();
+        if (!res.ok || raw.error) { setPhase("waiting"); setNovaState("idle"); return; }
+        const result: PhonemeResult = {
+            ...raw,
+            feedback: raw.feedback || "Good effort! Keep trying!",
+            mouthCue: raw.mouthCue || "Shape your mouth like you're saying the sound.",
+        };
         setLastResult(result);
         const attempt: AttemptData = { word: cur.word, transcript, score: result.score, correct: result.correct, substitution: result.substitution };
         if (sessionIdRef.current) sessionIdRef.current = recordAttempt(sessionIdRef.current, attempt);
@@ -111,7 +122,9 @@ export default function PracticePage() {
     }
     async function handleNeedsWork(result: PhonemeResult) {
         setNovaState("encouraging"); setPhase("redirecting");
-        await speakAsNova(result.feedback); setShowMouthDiagram(true); await speakAsNova(result.mouthCue);
+        if (result.feedback) await speakAsNova(result.feedback);
+        setShowMouthDiagram(true);
+        if (result.mouthCue) await speakAsNova(result.mouthCue);
         const next = attempts + 1; setAttempts(next);
         if (next >= MAX_ATTEMPTS) {
             await speakAsNova("You are doing amazing, let us try the next one!"); setShowMouthDiagram(false); setAttempts(0); advanceWord();

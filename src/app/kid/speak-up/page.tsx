@@ -14,7 +14,7 @@ import XPCounter from "@/components/XPCounter";
 import StreakBadge from "@/components/StreakBadge";
 import SessionSummary from "@/components/SessionSummary";
 import { speakAsNova } from "@/lib/elevenlabs";
-import { analyzePhoneme } from "@/lib/gemini";
+
 import { startListening, stopListening } from "@/lib/speechCapture";
 
 // LSVT LOUD target words: short, high-frequency, with clear vowel sounds
@@ -82,12 +82,12 @@ export default function SpeakUpPage() {
                 setPhase("analyzing");
                 setNovaState("thinking");
 
-                const result = await analyzePhoneme({
-                    word: words[index].word.toLowerCase(),
-                    transcript: transcript.toLowerCase(),
-                    targetSound: "r", // placeholder — backend scores loudness/clarity
-                    age: 7,
+                const res = await fetch("/api/analyze", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ word: words[index].word.toLowerCase(), transcript: transcript.toLowerCase(), targetSound: "r", age: 7 }),
                 });
+                const result = await res.json();
 
                 // In the real app, the backend scores voice intensity (dB) and clarity
                 // For UI stub: score >= 50 = good enough loudness

@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ArtiCue - Speech Therapy for Canadian Kids",
-  description: "Speech therapy for every Canadian kid — no waitlist required.",
+  title: "ArtiCue - Speech Therapy for Canadian Children",
+  description: "Speech therapy for every Canadian child — no waitlist required.",
 };
 
 export default function RootLayout({

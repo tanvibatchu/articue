@@ -1,6 +1,61 @@
 // blendData.ts — Blend It! exercise data.
 // Each entry contains a word split into audible phoneme segments.
 // Nova "says" each segment separately; the child blends them into the full word.
+//
+// segmentToSpeech() converts short phoneme spellings into TTS-friendly phrases
+// so ElevenLabs pronounces the *sound* rather than the letter name.
+
+// PHONEME_STRETCH: how to exaggerate a phoneme at the START of a word.
+// For sonorants we repeat the character(s). For stops we can't truly stretch them
+// so we use the word as-is (the word context alone improves ElevenLabs accuracy).
+const PHONEME_STRETCH: Record<string, string> = {
+    "r": "rrrrr",
+    "l": "lllll",
+    "m": "mmmmm",
+    "n": "nnnnn",
+    "s": "sssss",
+    "f": "fffff",
+    "v": "vvvvv",
+    "z": "zzzzz",
+    "w": "wwwww",
+    "y": "yyyyy",
+    "sh": "shhhh",
+    "th": "thhhh",
+    "ch": "chhhh",
+};
+
+// PHONEME_SOLO: isolated phoneme sound when there's no word context.
+const PHONEME_SOLO: Record<string, string> = {
+    "r": "rrr", "l": "lll", "m": "mmm", "n": "nnn",
+    "s": "sss", "f": "fff", "v": "vvv", "z": "zzz",
+    "w": "wuh", "y": "yuh",
+    // Stop consonants — use open "a" vowel; schwa "uh" diphthongs to "ua" at slow speed
+    "b": "buh", "c": "ka", "d": "da", "g": "ga",
+    "h": "ha", "j": "ja", "k": "ka", "p": "pa",
+    "t": "ta", "x": "ksa", "q": "kwa",
+    "a": "aah", "e": "eh", "i": "ih", "o": "oh", "u": "uh",
+    "sh": "sha", "ch": "cha", "th": "thh",
+    "ck": "ka", "ng": "nng", "nd": "nd", "mp": "mp", "nk": "nk",
+    "ai": "ay", "ee": "ee", "oo": "oo", "aw": "aw", "er": "er",
+    "it": "it", "et": "et", "en": "en", "on": "on", "an": "an", "in": "in",
+};
+
+/**
+ * Returns the TTS text for a phoneme segment.
+ *
+ * isFirst=true  → uses longer stretch (more emphasis on the target sound)
+ * isFirst=false → standard isolated phoneme sound
+ *
+ * The full word is spoken SEPARATELY after all segments by the caller.
+ * This keeps each sound audibly distinct before blending.
+ */
+export function segmentToSpeech(segment: string, isFirst: boolean): string {
+    const key = segment.toLowerCase();
+    if (isFirst) {
+        return PHONEME_STRETCH[key] ?? PHONEME_SOLO[key] ?? segment;
+    }
+    return PHONEME_SOLO[key] ?? segment;
+}
 
 export type BlendWord = {
     word: string;

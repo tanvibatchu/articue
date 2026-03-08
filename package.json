@@ -1,5 +1,5 @@
 {
-  "name": "anticue",
+  "name": "articue",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,6 +11,7 @@
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.16.0",
     "@opentelemetry/api": "^1.9.0",
+    "admin": "^1.4.1",
     "dotenv": "^17.3.1",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",

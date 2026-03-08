@@ -45,7 +45,7 @@ export default function RolePage() {
             Choose your view
           </h1>
           <p className="text-lg text-white/80">
-            Continue as a parent or switch to the kid experience.
+            Continue as a parent or switch to the child view.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -59,7 +59,7 @@ export default function RolePage() {
             href="/kid"
             className="px-6 py-4 bg-purple-600 text-white font-semibold rounded-lg shadow-lg shadow-purple-500/60 hover:bg-purple-700 hover:-translate-y-0.5 transition-all duration-200"
           >
-            Kid
+            Child
           </Link>
         </div>
       </div>

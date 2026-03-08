@@ -13,13 +13,13 @@ import CelebrationBurst from "@/components/CelebrationBurst";
 import XPCounter from "@/components/XPCounter";
 import StreakBadge from "@/components/StreakBadge";
 import SessionSummary from "@/components/SessionSummary";
-import { speakAsNova } from "@/lib/elevenlabs";
-import { analyzePhoneme, PhonemeResult } from "@/lib/gemini";
+import { speakAsNova, stopCurrentAudio } from "@/lib/elevenlabs";
+import type { PhonemeResult } from "@/lib/gemini";
 import { startListening, stopListening } from "@/lib/speechCapture";
-import { blendData, BlendWord } from "@/lib/blendData";
+import { blendData, BlendWord, segmentToSpeech } from "@/lib/blendData";
 import { TargetSound } from "@/lib/wordBanks";
 
-type Phase = "loading" | "revealing" | "waiting" | "recording" | "analyzing" | "celebrating" | "redirecting" | "summary";
+type Phase = "loading" | "ready" | "revealing" | "waiting" | "recording" | "analyzing" | "celebrating" | "redirecting" | "summary";
 
 const TOTAL_WORDS = 6;
 const MAX_ATTEMPTS = 2;
@@ -43,6 +43,11 @@ export default function BlendItPage() {
     const [rateMode, setRateMode] = useState<"slow" | "fast">("slow");
     const phaseRef = useRef<Phase>("loading");
     const rateModeRef = useRef<"slow" | "fast">("slow");
+    // Cancellation token: each revealWord call gets a unique ID; stale runs abort themselves
+    const runIdRef = useRef(0);
+    // Store current word list for revealWord to access without stale closure
+    const wordsRef = useRef<BlendWord[]>([]);
+    const indexRef = useRef(0);
 
     useEffect(() => { phaseRef.current = phase; }, [phase]);
     useEffect(() => { rateModeRef.current = rateMode; }, [rateMode]);
@@ -50,27 +55,50 @@ export default function BlendItPage() {
     useEffect(() => {
         const w = blendData[activeSound].slice(0, TOTAL_WORDS);
         setWords(w);
-        startWord(0, w);
+        wordsRef.current = w;
+        loadWord(0, w);
+        return () => { runIdRef.current++; stopCurrentAudio(); }; // cancel on unmount / Strict Mode remount
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeSound]);
 
-    async function startWord(i: number, wordList: BlendWord[]) {
+    /** Prepare a word for display and show the Start button — does NOT play audio. */
+    function loadWord(i: number, wordList: BlendWord[]) {
+        runIdRef.current++; // invalidate any in-flight reveal
+        stopCurrentAudio();
+        indexRef.current = i;
         setRevealedSegments(0);
         setAttempts(0);
         setLastResult(null);
+        setNovaState("idle");
+        setPhase("ready");
+    }
+
+    /** Play the sounding-out sequence. Called by Start button and Replay button. */
+    async function revealWord() {
+        const runId = ++runIdRef.current;
+        const word = wordsRef.current[indexRef.current];
+        if (!word) return;
+
+        setRevealedSegments(0);
         setPhase("revealing");
         setNovaState("thinking");
-        const word = wordList[i];
-        // Pause duration controlled by rate mode (ReST therapy)
+
         const pauseMs = rateModeRef.current === "slow" ? 900 : 250;
 
         for (let s = 0; s < word.segments.length; s++) {
-            await speakAsNova(word.segments[s]);
+            if (runIdRef.current !== runId) { stopCurrentAudio(); return; }
+            await speakAsNova(segmentToSpeech(word.segments[s], s === 0), 0.82);
+            if (runIdRef.current !== runId) { stopCurrentAudio(); return; }
             setRevealedSegments(s + 1);
             await new Promise(r => setTimeout(r, pauseMs));
         }
 
+        if (runIdRef.current !== runId) { stopCurrentAudio(); return; }
+        // Say the full word after all segments so the child hears the blend target
+        await speakAsNova(word.word);
+        if (runIdRef.current !== runId) { stopCurrentAudio(); return; }
         await speakAsNova("Now you blend it!");
+        if (runIdRef.current !== runId) { stopCurrentAudio(); return; }
         setNovaState("idle");
         setPhase("waiting");
     }
@@ -96,10 +124,21 @@ export default function BlendItPage() {
     }
 
     async function handleTranscript(transcript: string) {
+        // Stop mic before any TTS plays to prevent echo feedback loop
+        stopListening();
         setNovaState("thinking");
-        const result = await analyzePhoneme({
-            word: words[index].word, transcript, targetSound: activeSound, age: 6,
+        const res = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ word: wordsRef.current[indexRef.current].word, transcript, targetSound: activeSound, age: 6 }),
         });
+        const raw = await res.json();
+        if (!res.ok || raw.error) { setPhase("waiting"); setNovaState("idle"); return; }
+        const result: PhonemeResult = {
+            ...raw,
+            feedback: raw.feedback || "Good try! Let's keep going!",
+            mouthCue: raw.mouthCue || "",
+        };
         setLastResult(result);
 
         if (result.correct || result.score >= SCORE_THRESHOLD) {
@@ -108,7 +147,7 @@ export default function BlendItPage() {
             setXp(p => p + 10);
             setCorrect(p => p + 1);
             setPhase("celebrating");
-            await speakAsNova(`You blended it! ${result.feedback}`);
+            await speakAsNova(`You blended it! ${result.feedback || "Amazing!"}`);
             await new Promise(r => setTimeout(r, 1600));
             setShowCelebration(false);
             advanceWord();
@@ -117,26 +156,28 @@ export default function BlendItPage() {
             setPhase("redirecting");
             const nextAttempts = attempts + 1;
             setAttempts(nextAttempts);
-            await speakAsNova(result.feedback);
+            if (result.feedback) await speakAsNova(result.feedback);
 
             if (nextAttempts >= MAX_ATTEMPTS) {
-                await speakAsNova(`The word was ${words[index].word}! Let's try the next one!`);
+                await speakAsNova(`The word was ${wordsRef.current[indexRef.current].word}! Let's try the next one!`);
                 advanceWord();
             } else {
                 await speakAsNova("Let's hear the sounds again…");
-                startWord(index, words);
+                await new Promise(r => setTimeout(r, 300));
+                revealWord();
             }
         }
     }
 
     function advanceWord() {
-        const next = index + 1;
-        if (next >= words.length) {
+        const next = indexRef.current + 1;
+        if (next >= wordsRef.current.length) {
             setShowSummary(true);
             setPhase("summary");
         } else {
             setIndex(next);
-            startWord(next, words);
+            indexRef.current = next;
+            loadWord(next, wordsRef.current);
         }
     }
 
@@ -159,7 +200,7 @@ export default function BlendItPage() {
                     onPlayAgain={() => {
                         setIndex(0); setXp(0); setCorrect(0); setShowSummary(false);
                         const w = blendData[activeSound].slice(0, TOTAL_WORDS);
-                        setWords(w); startWord(0, w);
+                        setWords(w); wordsRef.current = w; loadWord(0, w);
                     }}
                     onDone={() => { window.location.href = "/kid"; }}
                 />
@@ -212,9 +253,10 @@ export default function BlendItPage() {
                 {/* Instruction */}
                 <div className="text-center px-4">
                     <p className="text-purple-300 text-sm uppercase tracking-widest mb-1">
-                        {phase === "revealing" ? "Listen to each sound…" : phase === "waiting" ? "Now blend them!" : phase === "recording" ? "I'm listening…" : phase === "celebrating" ? (lastResult?.feedback ?? "Amazing!") : ""}
+                        {phase === "ready" ? "Ready to listen?" : phase === "revealing" ? "Listen to each sound…" : phase === "waiting" ? "Now blend them!" : phase === "recording" ? "I'm listening…" : phase === "celebrating" ? (lastResult?.feedback ?? "Amazing!") : ""}
                     </p>
                     <p className="text-white text-xl font-semibold">
+                        {phase === "ready" && "Tap Start to hear the sounds 🔊"}
                         {phase === "waiting" && "Say the whole word! 🎤"}
                         {phase === "analyzing" && "Nova is thinking… 💭"}
                         {phase === "redirecting" && (lastResult?.feedback ?? "So close! Try again!")}
@@ -249,15 +291,47 @@ export default function BlendItPage() {
                     </div>
                 )}
 
-                {/* Mic button */}
-                <div className="flex flex-col items-center mt-2">
-                    <MicButton
-                        onStart={handleMicStart}
-                        onStop={handleMicStop}
-                        isRecording={phase === "recording"}
-                        disabled={phase !== "waiting"}
-                    />
-                </div>
+                {/* Start button (ready phase) */}
+                {phase === "ready" && (
+                    <button
+                        onClick={revealWord}
+                        className="mt-2 px-8 py-4 bg-purple-600 hover:bg-purple-500 active:scale-95 text-white text-lg font-bold rounded-2xl shadow-lg shadow-purple-500/40 transition-all duration-200 flex items-center gap-2"
+                    >
+                        🔊 Start
+                    </button>
+                )}
+
+                {/* Mic + Replay buttons (waiting phase) */}
+                {(phase === "waiting" || phase === "recording") && (
+                    <div className="flex flex-col items-center gap-3 mt-2">
+                        <MicButton
+                            onStart={handleMicStart}
+                            onStop={handleMicStop}
+                            isRecording={phase === "recording"}
+                            disabled={phase !== "waiting"}
+                        />
+                        {phase === "waiting" && (
+                            <button
+                                onClick={revealWord}
+                                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold text-purple-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200"
+                            >
+                                🔁 Replay sounds
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Mic button for non-waiting/ready phases (disabled) */}
+                {phase !== "waiting" && phase !== "recording" && phase !== "ready" && (
+                    <div className="flex flex-col items-center mt-2">
+                        <MicButton
+                            onStart={handleMicStart}
+                            onStop={handleMicStop}
+                            isRecording={false}
+                            disabled={true}
+                        />
+                    </div>
+                )}
 
                 <div className="flex-1" />
 

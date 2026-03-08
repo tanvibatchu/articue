@@ -8,7 +8,7 @@ export default function Home() {
           ArtiCue
         </h1>
         <p className="text-xl md:text-2xl text-white/90">
-          Speech therapy for every Canadian kid — no waitlist required.
+          Speech therapy for every Canadian child — no waitlist required.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <a
