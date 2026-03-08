@@ -25,7 +25,10 @@ export default function ProfileMenu({ onClose, readOnly = false }: ProfileMenuPr
     // Read-only Profile details
     const [streak, setStreak] = useState(0);
     const [xp, setXp] = useState(0);
+
+    // Target sounds
     const [sounds, setSounds] = useState<string[]>([]);
+    const [soundToAdd, setSoundToAdd] = useState("");
 
     // We store the full profile object so we don't accidentally wipe out fields not shown in the UI during a POST
     const [originalProfile, setOriginalProfile] = useState<ChildProfile | null>(null);
@@ -70,6 +73,7 @@ export default function ProfileMenu({ onClose, readOnly = false }: ProfileMenuPr
                 age: Number(age),
                 parentName,
                 parentRelation,
+                targetSounds: sounds,
             };
 
             const res = await fetch("/api/profile", {
@@ -213,9 +217,56 @@ export default function ProfileMenu({ onClose, readOnly = false }: ProfileMenuPr
                             </div>
                         </div>
 
-                        <div style={{ textAlign: "center" }}>
-                            <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#945F95", textTransform: "uppercase", marginRight: 8 }}>Active Target Sounds:</span>
-                            {sounds.length > 0 ? sounds.map(s => <span key={s} style={{ background: "rgba(206,125,165,0.15)", border: "1px solid rgba(206,125,165,0.4)", color: "#CE7DA5", padding: "2px 8px", borderRadius: 6, fontSize: "0.8rem", fontWeight: 800, marginRight: 4 }}>/{s}/</span>) : <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#390052" }}>None</span>}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#945F95", textTransform: "uppercase" }}>Target Sounds</span>
+
+                                {!readOnly && (
+                                    <div style={{ display: "flex", gap: 8 }}>
+                                        <select
+                                            value={soundToAdd}
+                                            onChange={(e) => setSoundToAdd(e.target.value)}
+                                            style={{ padding: "4px 8px", borderRadius: 8, border: "1px solid rgba(57,0,82,0.1)", fontSize: "0.85rem", fontWeight: 700, outline: "none", cursor: "pointer", background: "#F9F4F1" }}
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="r">/r/</option>
+                                            <option value="s">/s/</option>
+                                            <option value="th">/th/</option>
+                                            <option value="l">/l/</option>
+                                            <option value="fluency">Fluency</option>
+                                        </select>
+                                        <button
+                                            onClick={() => {
+                                                if (soundToAdd && !sounds.includes(soundToAdd)) {
+                                                    setSounds([...sounds, soundToAdd]);
+                                                    setSoundToAdd("");
+                                                }
+                                            }}
+                                            disabled={!soundToAdd}
+                                            style={{ background: soundToAdd ? "#1CB0F6" : "#E5E5E5", color: "white", border: "none", borderRadius: 8, padding: "4px 12px", fontSize: "0.8rem", fontWeight: 800, cursor: soundToAdd ? "pointer" : "not-allowed", transition: "all 0.1s" }}
+                                        >
+                                            Add
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, minHeight: 40, padding: 8, background: "#F9F4F1", borderRadius: 12, border: "1px dashed rgba(57,0,82,0.1)" }}>
+                                {sounds.length > 0 ? sounds.map(s => (
+                                    <span key={s} style={{
+                                        display: "inline-flex", alignItems: "center", gap: 6,
+                                        background: "white", border: "2px solid rgba(206,125,165,0.4)", color: "#CE7DA5", padding: "4px 10px", borderRadius: 10, fontSize: "0.85rem", fontWeight: 800
+                                    }}>
+                                        {s === "fluency" ? "Fluency" : `/${s}/`}
+                                        {!readOnly && (
+                                            <button
+                                                onClick={() => setSounds(sounds.filter(snd => snd !== s))}
+                                                style={{ background: "transparent", border: "none", color: "#FF4B4B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, margin: 0, fontWeight: 800 }}
+                                            >×</button>
+                                        )}
+                                    </span>
+                                )) : <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#945F95", padding: 4 }}>No target sounds configured.</span>}
+                            </div>
                         </div>
 
                         {/* Save Button */}
