@@ -14,7 +14,7 @@ import XPCounter from "@/components/XPCounter";
 import StreakBadge from "@/components/StreakBadge";
 import SessionSummary from "@/components/SessionSummary";
 import { speakAsNova } from "@/lib/elevenlabs";
-import { generateSessionCelebration } from "@/lib/gemini";
+
 import { TargetSound } from "@/lib/wordBanks";
 import { semanticData } from "@/lib/semanticData";
 import { startSession, recordAttempt, endSession, AttemptData, SessionWithId } from "@/lib/sessionManager";
@@ -112,7 +112,7 @@ export default function SoundHuntPage() {
                 if (p) {
                     const targets = Array.isArray(p.targetSounds) && p.targetSounds.length
                         ? (p.targetSounds as TargetSound[])
-                        : ["r"];
+                        : ["r" as TargetSound];
                     setProfile({
                         name: p.name ?? "Friend",
                         age: typeof p.age === "number" ? p.age : 7,
@@ -120,7 +120,7 @@ export default function SoundHuntPage() {
                         streak: p.streak ?? 0,
                         totalXP: p.totalXP ?? p.xp ?? 0,
                     });
-                    setActiveSound(targets[0] ?? "r");
+                    setActiveSound((targets[0] ?? "r") as TargetSound);
                     setStreak(p.streak ?? 0);
                     return;
                 }
@@ -206,8 +206,13 @@ export default function SoundHuntPage() {
         setXp(summary?.xpEarned ?? xp);
 
         try {
-            const msg = await generateSessionCelebration(activeSound.toUpperCase(), attemptsList.length || TOTAL_ROUNDS, acc);
-            setSummaryMessage(msg);
+            const celebRes = await fetch("/api/celebrate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sound: activeSound.toUpperCase(), count: attemptsList.length || TOTAL_ROUNDS, accuracy: acc }),
+            });
+            const celebData = await celebRes.json();
+            if (celebData.message) setSummaryMessage(celebData.message);
         } catch {
             setSummaryMessage(correct >= 6 ? "You're a sound detective! Amazing ears!" : "Great listening practice! You're getting better every time!");
         }

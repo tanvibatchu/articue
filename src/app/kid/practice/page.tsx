@@ -11,7 +11,6 @@ import XPCounter from "@/components/XPCounter";
 import StreakBadge from "@/components/StreakBadge";
 import SessionSummary from "@/components/SessionSummary";
 import type { PhonemeResult } from "@/lib/gemini";
-import { generateSessionCelebration } from "@/lib/gemini";
 import { speakAsNova, demonstrateWord } from "@/lib/elevenlabs";
 import { startListening, stopListening } from "@/lib/speechCapture";
 import { getSessionWords, TargetSound, WordEntry } from "@/lib/wordBanks";
@@ -53,7 +52,7 @@ export default function PracticePage() {
                 if (p) {
                     const targets = Array.isArray(p.targetSounds) && p.targetSounds.length
                         ? (p.targetSounds as TargetSound[])
-                        : ["r"];
+                        : ["r" as TargetSound];
                     setProfile({
                         name: p.name ?? "Friend",
                         age: typeof p.age === "number" ? p.age : 6,
@@ -61,7 +60,7 @@ export default function PracticePage() {
                         streak: p.streak ?? 0,
                         totalXP: p.totalXP ?? p.xp ?? 0,
                     });
-                    setActiveSound(targets[0] ?? "r");
+                    setActiveSound((targets[0] ?? "r") as TargetSound);
                     return;
                 }
             } catch {
@@ -81,7 +80,7 @@ export default function PracticePage() {
         if (sessionTimerRef.current) clearTimeout(sessionTimerRef.current);
         sessionTimerRef.current = setTimeout(() => { finishSession(true); }, 5 * 60 * 1000); // 5-minute cap
         setNovaState("idle"); setPhase("greeting");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     useEffect(() => { if (profile) initSession(profile, activeSound); }, [profile, activeSound, initSession]);
     useEffect(() => {
@@ -192,7 +191,13 @@ export default function PracticePage() {
 
         let message = acc >= 80 ? "You are a speech superstar! I am so proud of you!" : acc >= 60 ? "Fantastic effort today!" : "You showed up and tried your best!";
         try {
-            message = await generateSessionCelebration(activeSound.toUpperCase(), session.attempts.length || TOTAL_WORDS, acc);
+            const celebRes = await fetch("/api/celebrate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sound: activeSound.toUpperCase(), count: session.attempts.length || TOTAL_WORDS, accuracy: acc }),
+            });
+            const celebData = await celebRes.json();
+            if (celebData.message) message = celebData.message;
         } catch { /* keep fallback */ }
         setSummaryMessage(message);
 
