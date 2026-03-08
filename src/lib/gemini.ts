@@ -1,100 +1,188 @@
-/**
- * Gemini AI integration for phoneme analysis, fluency analysis, and improvement prediction.
- * Import: analyzePhoneme, analyzeFluency, predictImprovement
- */
-
 import type {
-  PhonemeResult,
   FluencyResult,
+  PhonemeResult,
   PredictionResult,
   SessionData,
 } from "@/types";
 
-// Re-export so pages can import PhonemeResult from "@/lib/gemini"
 export type { PhonemeResult };
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const MODEL = "gemini-2.0-flash";
+const MODEL = "gemini-1.5-flash";
+
+type GeminiTextPart = { text: string };
+type GeminiInlineDataPart = {
+  inlineData: {
+    mimeType: string;
+    data: string;
+  };
+};
+
+type GeminiPart = GeminiTextPart | GeminiInlineDataPart;
 
 function getApiKey(): string {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("GEMINI_API_KEY is not set in .env.local");
-  return key;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured.");
+  }
+
+  return apiKey;
 }
 
-async function callGemini(prompt: string): Promise<string> {
-  const apiKey = getApiKey();
-  const url = `${GEMINI_BASE}/${MODEL}:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json", temperature: 0.3 },
-    }),
-  });
-  if (!res.ok) { const errText = await res.text(); throw new Error(`Gemini API error (${res.status}): ${errText}`); }
-  const data = await res.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-  if (!text) throw new Error("Gemini API returned no text");
+function parseGeminiJson<T>(raw: string): T {
+  const cleaned = raw
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+  const objectText = cleaned.match(/\{[\s\S]*\}/)?.[0] ?? cleaned;
+  return JSON.parse(objectText) as T;
+}
+
+function extractTextResponse(response: unknown): string {
+  const candidate = (response as {
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: string }>;
+      };
+    }>;
+  }).candidates?.[0];
+
+  const text = candidate?.content?.parts
+    ?.map((part) => part.text ?? "")
+    .join("")
+    .trim();
+
+  if (!text) {
+    throw new Error("Gemini returned no text.");
+  }
+
   return text;
 }
 
-/**
- * Analyzes child's pronunciation. Accepts positional args OR an options object.
- */
+async function callGemini(parts: GeminiPart[]): Promise<string> {
+  const apiKey = getApiKey();
+  const response = await fetch(`${GEMINI_BASE}/${MODEL}:generateContent?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts,
+        },
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.2,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+  }
+
+  const payload = (await response.json()) as unknown;
+  return extractTextResponse(payload);
+}
+
+function normalizePhonemeResult(result: Partial<PhonemeResult>): PhonemeResult {
+  return {
+    correct: Boolean(result.correct),
+    score: typeof result.score === "number" ? result.score : 0,
+    substitution: result.substitution ?? null,
+    feedback: typeof result.feedback === "string" && result.feedback.trim()
+      ? result.feedback.trim()
+      : "Great try!",
+    mouthCue: typeof result.mouthCue === "string" ? result.mouthCue.trim() : "",
+    tryAgain: Boolean(result.tryAgain),
+  };
+}
+
+export async function analyzePronunciationAudio(input: {
+  age: number;
+  audioBase64: string;
+  mimeType: string;
+  targetSound: string;
+  word: string;
+}): Promise<PhonemeResult> {
+  const prompt = [
+    "You are a pediatric speech-language pathologist assistant.",
+    `Child age: ${input.age}`,
+    `Target sound: ${input.targetSound}`,
+    `Target word: ${input.word}`,
+    "Listen to the audio and analyze the child's pronunciation.",
+    "Respond in JSON only, no other text:",
+    "{",
+    '  "correct": boolean,',
+    '  "score": number (0-100),',
+    '  "substitution": string or null,',
+    '  "feedback": string (max 12 words, child-friendly, encouraging),',
+    '  "mouthCue": string (one sentence about tongue/lip placement),',
+    '  "tryAgain": boolean',
+    "}",
+  ].join("\n");
+
+  const raw = await callGemini([
+    { text: prompt },
+    {
+      inlineData: {
+        mimeType: input.mimeType || "audio/webm",
+        data: input.audioBase64,
+      },
+    },
+  ]);
+
+  return normalizePhonemeResult(parseGeminiJson<PhonemeResult>(raw));
+}
+
 export async function analyzePhoneme(
-  wordOrOpts: string | { word: string; transcript: string; targetSound: string; age: number },
+  wordOrOptions:
+    | string
+    | {
+        age: number;
+        targetSound: string;
+        transcript: string;
+        word: string;
+      },
   transcript?: string,
   targetSound?: string,
   age?: number
 ): Promise<PhonemeResult> {
-  let w: string, t: string, ts: string, a: number;
-  if (typeof wordOrOpts === "object") {
-    w = wordOrOpts.word; t = wordOrOpts.transcript;
-    ts = wordOrOpts.targetSound; a = wordOrOpts.age;
-  } else {
-    w = wordOrOpts; t = transcript!; ts = targetSound!; a = age!;
-  }
-  try {
-    // Prompt 1 — Phoneme analysis (kid feedback)
-    const prompt = [
-      "You are a pediatric speech-language pathologist assistant.",
-      `Child age: ${a}`,
-      `Target sound: ${ts}`,
-      `Target word: ${w}`,
-      `What the child said: ${t}`,
-      "Respond in JSON only:",
-      "{",
-      '  "correct": boolean,',
-      '  "score": number (0-100),',
-      '  "substitution": string or null,',
-      '  "feedback": string (max 12 words, child-friendly, encouraging),',
-      '  "mouthCue": string (one sentence about tongue/lip placement),',
-      '  "tryAgain": boolean',
-      "}",
-    ].join("\n");
+  const payload =
+    typeof wordOrOptions === "string"
+      ? {
+          age: age ?? 6,
+          targetSound: targetSound ?? "",
+          transcript: transcript ?? "",
+          word: wordOrOptions,
+        }
+      : wordOrOptions;
 
-    const raw = await callGemini(prompt);
-    return normalizePhonemeResult(JSON.parse(raw) as PhonemeResult);
-  } catch (err) { throw err instanceof Error ? err : new Error(String(err)); }
+  const prompt = [
+    "You are a pediatric speech-language pathologist assistant.",
+    `Child age: ${payload.age}`,
+    `Target sound: ${payload.targetSound}`,
+    `Target word: ${payload.word}`,
+    `What the child said: ${payload.transcript}`,
+    "Respond in JSON only, no other text:",
+    "{",
+    '  "correct": boolean,',
+    '  "score": number (0-100),',
+    '  "substitution": string or null,',
+    '  "feedback": string (max 12 words, child-friendly, encouraging),',
+    '  "mouthCue": string (one sentence about tongue/lip placement),',
+    '  "tryAgain": boolean',
+    "}",
+  ].join("\n");
+
+  const raw = await callGemini([{ text: prompt }]);
+  return normalizePhonemeResult(parseGeminiJson<PhonemeResult>(raw));
 }
 
-function normalizePhonemeResult(r: Partial<PhonemeResult>): PhonemeResult {
-  return {
-    correct: Boolean(r?.correct),
-    score: typeof r?.score === "number" ? r.score : 0,
-    substitution: r?.substitution ?? null,
-    feedback: String(r?.feedback ?? ""),
-    mouthCue: String(r?.mouthCue ?? ""),
-    tryAgain: Boolean(r?.tryAgain),
-  };
-}
-
-/**
- * Prompt 2 — Session summary celebration line for the child.
- * Returns a short celebratory sentence (<=15 words).
- */
 export async function generateSessionCelebration(
   sound: string,
   count: number,
@@ -102,15 +190,16 @@ export async function generateSessionCelebration(
 ): Promise<string> {
   const prompt = [
     "Child just completed a speech practice session.",
-    `Sound: ${sound}, Words attempted: ${count}, Accuracy: ${accuracy}%`,
-    "Write one celebratory sentence (max 15 words) for the child to hear.",
+    `Sound: ${sound}`,
+    `Words attempted: ${count}`,
+    `Accuracy: ${accuracy}%`,
     'Respond in JSON only: { "message": string }',
   ].join("\n");
 
-  const raw = await callGemini(prompt);
   try {
-    const parsed = JSON.parse(raw) as { message?: string };
-    return typeof parsed?.message === "string" && parsed.message.trim()
+    const raw = await callGemini([{ text: prompt }]);
+    const parsed = parseGeminiJson<{ message?: string }>(raw);
+    return typeof parsed.message === "string" && parsed.message.trim()
       ? parsed.message.trim()
       : "You did amazing today! I am so proud of you!";
   } catch {
@@ -118,37 +207,83 @@ export async function generateSessionCelebration(
   }
 }
 
-export async function analyzeFluency(phrase: string, transcript: string, age: number): Promise<FluencyResult> {
-  try {
-    const prompt = `You are a pediatric speech-language pathologist assistant.\nChild age: ${age}\nTarget phrase: ${phrase}\nWhat the child said: ${transcript}\nRespond in JSON only, no other text:\n{ "score": number 0-100, "rhythm": "good" | "rushed" | "hesitant", "feedback": string, "encouragement": string }`;
-    const raw = await callGemini(prompt);
-    return normalizeFluencyResult(JSON.parse(raw) as FluencyResult);
-  } catch (err) { throw err instanceof Error ? err : new Error(String(err)); }
-}
+function normalizeFluencyResult(result: Partial<FluencyResult>): FluencyResult {
+  const rhythm = result.rhythm;
+  const safeRhythm =
+    rhythm === "good" || rhythm === "rushed" || rhythm === "hesitant"
+      ? rhythm
+      : "hesitant";
 
-function normalizeFluencyResult(r: Partial<FluencyResult>): FluencyResult {
-  const rhythm = r?.rhythm;
-  const validRhythm = rhythm === "good" || rhythm === "rushed" || rhythm === "hesitant" ? rhythm : "hesitant";
-  return { score: typeof r?.score === "number" ? r.score : 0, rhythm: validRhythm, feedback: String(r?.feedback ?? ""), encouragement: String(r?.encouragement ?? "") };
-}
-
-export async function predictImprovement(sessions: SessionData[], targetSound: string, age: number): Promise<PredictionResult> {
-  try {
-    const summary = JSON.stringify(sessions.map(s => ({ date: s.date, durationSeconds: s.durationSeconds, targetSound: s.targetSound, attemptCount: s.attempts.length, averageAccuracy: s.averageAccuracy })));
-    const prompt = `You are a pediatric speech-language pathologist assistant.\nChild age: ${age}\nTarget sound: ${targetSound}\nPast sessions summary (JSON): ${summary}\nRespond in JSON only, no other text:\n{ "currentAccuracy": number 0-100, "weeklyImprovementRate": number, "weeksToMastery": number, "parentInsight": string, "trend": "improving" | "plateau" | "inconsistent" }`;
-    const raw = await callGemini(prompt);
-    return normalizePredictionResult(JSON.parse(raw) as PredictionResult);
-  } catch (err) { throw err instanceof Error ? err : new Error(String(err)); }
-}
-
-function normalizePredictionResult(r: Partial<PredictionResult>): PredictionResult {
-  const trend = r?.trend;
-  const validTrend = trend === "improving" || trend === "plateau" || trend === "inconsistent" ? trend : "inconsistent";
   return {
-    currentAccuracy: typeof r?.currentAccuracy === "number" ? r.currentAccuracy : 0,
-    weeklyImprovementRate: typeof r?.weeklyImprovementRate === "number" ? r.weeklyImprovementRate : 0,
-    weeksToMastery: typeof r?.weeksToMastery === "number" ? r.weeksToMastery : 0,
-    parentInsight: String(r?.parentInsight ?? ""),
-    trend: validTrend,
+    encouragement: typeof result.encouragement === "string" ? result.encouragement : "",
+    feedback: typeof result.feedback === "string" ? result.feedback : "",
+    rhythm: safeRhythm,
+    score: typeof result.score === "number" ? result.score : 0,
   };
+}
+
+export async function analyzeFluency(
+  phrase: string,
+  transcript: string,
+  age: number
+): Promise<FluencyResult> {
+  const prompt = [
+    "You are a pediatric speech-language pathologist assistant.",
+    `Child age: ${age}`,
+    `Target phrase: ${phrase}`,
+    `What the child said: ${transcript}`,
+    'Respond in JSON only: { "score": number, "rhythm": "good" | "rushed" | "hesitant", "feedback": string, "encouragement": string }',
+  ].join("\n");
+
+  const raw = await callGemini([{ text: prompt }]);
+  return normalizeFluencyResult(parseGeminiJson<FluencyResult>(raw));
+}
+
+function normalizePredictionResult(result: Partial<PredictionResult>): PredictionResult {
+  const trend = result.trend;
+  const safeTrend =
+    trend === "improving" || trend === "plateau" || trend === "inconsistent"
+      ? trend
+      : "inconsistent";
+
+  return {
+    currentAccuracy:
+      typeof result.currentAccuracy === "number" ? result.currentAccuracy : 0,
+    parentInsight:
+      typeof result.parentInsight === "string" ? result.parentInsight : "",
+    trend: safeTrend,
+    weeklyImprovementRate:
+      typeof result.weeklyImprovementRate === "number"
+        ? result.weeklyImprovementRate
+        : 0,
+    weeksToMastery:
+      typeof result.weeksToMastery === "number" ? result.weeksToMastery : 0,
+  };
+}
+
+export async function predictImprovement(
+  sessions: SessionData[],
+  targetSound: string,
+  age: number
+): Promise<PredictionResult> {
+  const summarizedSessions = JSON.stringify(
+    sessions.map((session) => ({
+      attemptCount: session.attempts.length,
+      averageAccuracy: session.averageAccuracy,
+      date: session.date,
+      durationSeconds: session.durationSeconds,
+      targetSound: session.targetSound,
+    }))
+  );
+
+  const prompt = [
+    "You are a pediatric speech-language pathologist assistant.",
+    `Child age: ${age}`,
+    `Target sound: ${targetSound}`,
+    `Past sessions summary: ${summarizedSessions}`,
+    'Respond in JSON only: { "currentAccuracy": number, "weeklyImprovementRate": number, "weeksToMastery": number, "parentInsight": string, "trend": "improving" | "plateau" | "inconsistent" }',
+  ].join("\n");
+
+  const raw = await callGemini([{ text: prompt }]);
+  return normalizePredictionResult(parseGeminiJson<PredictionResult>(raw));
 }
