@@ -198,21 +198,6 @@ export default function ParentGate({ onClose, onSuccess }: ParentGateProps) {
                             >
                                 Cancel
                             </button>
-                            {!isFirstTime && (
-                                <button
-                                    onClick={() => {
-                                        window.location.href = '/api/auth/login?prompt=login&returnTo=/role?action=view_pin';
-                                    }}
-                                    disabled={saving}
-                                    style={{
-                                        background: "transparent", border: "none", color: "#9333ea",
-                                        fontSize: "0.9rem", fontWeight: 700, cursor: "pointer",
-                                        marginTop: -4, textDecoration: "underline"
-                                    }}
-                                >
-                                    Forgot PIN?
-                                </button>
-                            )}
                         </div>
                     </div>
                 )}
