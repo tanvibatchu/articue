@@ -1,28 +1,25 @@
-// StreakBadge.tsx — Shows the child's current daily practice streak.
-// Fire emoji with animated pulse to encourage consistency.
-
+// StreakBadge.tsx — Shows the child's daily streak with solid bright design.
 "use client";
 
-type StreakBadgeProps = {
-    streak: number;
-};
-
-export default function StreakBadge({ streak }: StreakBadgeProps) {
+export default function StreakBadge({ streak }: { streak: number }) {
     return (
-        <div className="flex items-center gap-1.5 select-none">
-            <div className="flex items-center gap-1 bg-orange-500/15 border border-orange-400/30 rounded-full px-3 py-1">
-                <span
-                    className="text-base leading-none animate-[streak-pulse_2s_ease-in-out_infinite]"
-                    role="img"
-                    aria-label="streak fire"
-                >
-                    🔥
-                </span>
-                <span className="text-sm font-bold text-orange-300 tabular-nums">
-                    {streak}
-                    <span className="font-normal text-orange-400 ml-0.5">day{streak !== 1 ? "s" : ""}</span>
-                </span>
-            </div>
+        <div 
+            className="flex items-center select-none rounded-[16px] px-4 py-2"
+            style={{ 
+                background: "white", 
+                border: "2px solid rgba(57, 0, 82, 0.1)",
+                borderBottom: "4px solid #FF9600" /* Solid streak orange */
+            }}
+        >
+            <span
+                className="text-2xl leading-none animate-[streak-pulse_2.5s_ease-in-out_infinite] mr-2"
+                role="img" aria-label="streak fire"
+            >
+                🔥
+            </span>
+            <span className="text-lg font-black text-[#FF9600] tabular-nums tracking-wide">
+                {streak}
+            </span>
         </div>
     );
 }

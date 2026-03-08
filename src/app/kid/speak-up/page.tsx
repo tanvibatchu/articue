@@ -14,6 +14,7 @@ import XPCounter from "@/components/XPCounter";
 import StreakBadge from "@/components/StreakBadge";
 import SessionSummary from "@/components/SessionSummary";
 import { speakAsNova, stopCurrentAudio } from "@/lib/elevenlabs";
+import { generateSessionCelebration } from "@/lib/gemini";
 import { startSession, recordAttempt, endSession, AttemptData, SessionWithId } from "@/lib/sessionManager";
 
 import { startListening, stopListening } from "@/lib/speechCapture";
@@ -245,6 +246,13 @@ export default function SpeakUpPage() {
 
     return (
         <>
+                        <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+                body {
+                    background: #F9F4F1;
+                    font-family: 'Nunito', sans-serif;
+                }
+            `}</style>
             <CelebrationBurst active={showCelebration} />
             {showSummary && (
                 <SessionSummary
@@ -260,21 +268,21 @@ export default function SpeakUpPage() {
                 />
             )}
 
-            <main className="min-h-screen flex flex-col items-center px-4 pt-4 pb-8 gap-4 max-w-sm mx-auto">
+            <main className="min-h-screen flex flex-col items-center px-4 md:px-8 pt-6 md:pt-12 pb-24 gap-6 md:gap-12 max-w-3xl md:max-w-5xl mx-auto w-full md:px-12">
                 {/* Top bar */}
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Link href="/kid" className="text-purple-400 hover:text-white transition-colors text-2xl" aria-label="Back">←</Link>
+                        <Link href="/kid" className="text-[#945F95] hover:text-[#390052] transition-colors text-2xl" aria-label="Back">←</Link>
                         <StreakBadge streak={streak} />
                     </div>
                     <XPCounter xp={xp} />
                 </div>
 
                 {/* Mode pill */}
-                <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-1.5 border border-white/10">
+                <div className="flex items-center gap-2 bg-white rounded-[16px] px-4 py-1.5 border-2 border-[rgba(57,0,82,0.1)] border-b-[4px] border-b-[rgba(57,0,82,0.1)]">
                     <span className="text-lg">🔊</span>
-                    <span className="text-sm font-semibold text-purple-200">Speak Up!</span>
-                    <span className="text-xs text-blue-400 ml-1">LSVT · Dysarthria</span>
+                    <span className="text-sm font-black text-[#945F95]">Speak Up!</span>
+                    <span className="text-xs text-[#1CB0F6] ml-1">LSVT · Dysarthria</span>
                 </div>
 
                 {/* Nova */}
@@ -284,24 +292,24 @@ export default function SpeakUpPage() {
 
                 {/* Instruction */}
                 <div className="text-center px-4">
-                    <p className="text-purple-300 text-sm uppercase tracking-widest mb-1">Say it as LOUD as you can!</p>
+                    <p className="text-[#945F95] text-sm uppercase tracking-widest mb-1">Say it as LOUD as you can!</p>
                     {words[index] && phase !== "intro" && (
-                        <p className="text-purple-200 text-sm italic">{words[index].tip}</p>
+                        <p className="text-[#945F95] text-sm italic">{words[index].tip}</p>
                     )}
                 </div>
 
                 {/* Target word — BIG and bold */}
                 {words[index] && phase !== "intro" && (
-                    <div className="flex flex-col items-center gap-3 px-8 py-5 rounded-3xl bg-white/5 backdrop-blur-md border border-blue-400/30 shadow-[0_0_24px_rgba(96,165,250,0.2)] w-full max-w-xs animate-[fade-slide-in_0.4s_ease-out_forwards]">
+                    <div className="flex flex-col items-center gap-3 px-8 py-5 rounded-3xl bg-white border-2 border-[rgba(57,0,82,0.1)] border-b-[6px] border-b-[#1CB0F6] w-full max-w-sm md:max-w-lg animate-[fade-slide-in_0.4s_ease-out_forwards]">
                         <span className="text-7xl">{words[index].emoji}</span>
-                        <p className="text-5xl font-black text-white tracking-widest">{words[index].word}</p>
+                        <p className="text-5xl font-black text-[#390052] tracking-widest">{words[index].word}</p>
                     </div>
                 )}
 
                 {/* Volume meter */}
                 {phase !== "intro" && (
-                    <div className="w-full max-w-xs flex flex-col gap-2">
-                        <p className="text-center text-sm text-purple-300">{VOLUME_LABELS[volumeLevel]}</p>
+                    <div className="w-full max-w-sm md:max-w-lg flex flex-col gap-2">
+                        <p className="text-center text-sm text-[#945F95]">{VOLUME_LABELS[volumeLevel]}</p>
                         <div className="flex gap-2 items-end justify-center h-14">
                             {[1, 2, 3, 4].map((level) => (
                                 <div
@@ -315,13 +323,13 @@ export default function SpeakUpPage() {
                                                 : level === 3
                                                     ? "bg-yellow-400"
                                                     : "bg-orange-400"
-                                            : "bg-white/10",
+                                            : "bg-[rgba(57,0,82,0.1)]",
                                     ].join(" ")}
                                     style={{ height: `${level * 22}%` }}
                                 />
                             ))}
                         </div>
-                        <p className="text-center text-xs text-blue-400 font-medium">
+                        <p className="text-center text-xs text-[#1CB0F6] font-medium">
                             {phase === "recording" ? "🎙️ Listening…" : phase === "waiting" ? "Hold mic and speak!" : ""}
                         </p>
                     </div>
@@ -339,7 +347,7 @@ export default function SpeakUpPage() {
                                 "w-24 h-24 rounded-full flex items-center justify-center",
                                 "transition-all duration-200",
                                 phase === "recording"
-                                    ? "bg-blue-400 scale-110 animate-[mic-ring_1.2s_ease-in-out_infinite]"
+                                    ? "bg-[#1CB0F6] scale-110 animate-[mic-ring_1.2s_ease-in-out_infinite]"
                                     : phase === "waiting"
                                         ? "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-[0_0_24px_rgba(96,165,250,0.4)] active:scale-95"
                                         : "bg-blue-900/40 opacity-40 cursor-not-allowed",
@@ -348,7 +356,7 @@ export default function SpeakUpPage() {
                         >
                             <span className="text-4xl">🔊</span>
                         </button>
-                        <p className="text-sm text-blue-300 select-none">
+                        <p className="text-sm text-[#945F95] select-none">
                             {phase === "recording" ? "Release when done" : phase === "waiting" ? "Hold and SPEAK!" : ""}
                         </p>
                     </div>
@@ -358,11 +366,11 @@ export default function SpeakUpPage() {
 
                 {/* Progress */}
                 <div className="flex flex-col items-center gap-2 pb-2">
-                    <p className="text-xs text-purple-400">Word {Math.min(index + 1, TOTAL_WORDS)} of {TOTAL_WORDS}</p>
+                    <p className="text-xs text-[#945F95]">Word {Math.min(index + 1, TOTAL_WORDS)} of {TOTAL_WORDS}</p>
                     <div className="flex gap-2">
                         {Array.from({ length: TOTAL_WORDS }).map((_, i) => (
                             <div key={i} className={["w-3 h-3 rounded-full transition-all duration-500",
-                                i < index ? "bg-blue-400" : i === index ? "bg-blue-600 ring-2 ring-blue-400/50" : "bg-white/10"
+                                i < index ? "bg-[#1CB0F6]" : i === index ? "bg-[#1CB0F6] scale-125 " : "bg-[rgba(57,0,82,0.1)]"
                             ].join(" ")} />
                         ))}
                     </div>

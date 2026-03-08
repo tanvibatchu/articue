@@ -1,17 +1,14 @@
-// SessionSummary.tsx — End-of-session overlay shown after all words are complete.
-// Full-screen purple gradient with Nova celebrating, stats, and action buttons.
-// Slides up from bottom on display.
-
+// SessionSummary.tsx — Gamified bright light Session Summary
 "use client";
 
 import Nova from "./Nova";
 
 type SessionSummaryProps = {
-    accuracy: number;       // 0–100
+    accuracy: number;
     xpEarned: number;
     wordsCompleted: number;
     totalWords: number;
-    message: string;        // encouraging message from Nova
+    message: string;
     onPlayAgain: () => void;
     onDone: () => void;
 };
@@ -25,119 +22,77 @@ export default function SessionSummary({
     onPlayAgain,
     onDone,
 }: SessionSummaryProps) {
-    const stars =
-        accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0;
+    const stars = accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0;
 
     return (
         <div
-            className={[
-                "fixed inset-0 z-40 flex flex-col items-center justify-center",
-                "bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e]",
-                "animate-[slide-up_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]",
-                "p-6 overflow-y-auto",
-            ].join(" ")}
+            className="fixed inset-0 z-40 flex flex-col items-center justify-center animate-[slide-up_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards] p-6 overflow-y-auto"
+            style={{ background: "rgba(249, 244, 241, 0.95)", backdropFilter: "blur(10px)" }}
             role="dialog"
-            aria-label="Session complete"
             aria-modal="true"
         >
-            {/* Nova celebrating */}
-            <div className="mb-4">
-                <Nova state="celebrating" size="lg" />
-            </div>
+            <div className="bg-white rounded-[32px] p-8 w-full max-w-sm flex flex-col items-center text-center shadow-sm border-2 border-[rgba(57,0,82,0.05)] border-b-[8px]">
+                <div className="mb-2">
+                    <Nova state="celebrating" size="lg" />
+                </div>
 
-            {/* Title */}
-            <h1 className="text-3xl font-bold text-white mb-1 text-center">
-                Great Job! 🎉
-            </h1>
+                <h1 className="text-3xl font-black text-[#390052] mb-2 tracking-tight">
+                    Great Job! 🎉
+                </h1>
 
-            {/* Stars */}
-            <div className="flex gap-1 mb-5" aria-label={`${stars} out of 3 stars`}>
-                {[1, 2, 3].map((s) => (
-                    <span
-                        key={s}
-                        className={[
-                            "text-3xl transition-all duration-300",
-                            s <= stars ? "opacity-100 scale-110" : "opacity-25",
-                        ].join(" ")}
-                        aria-hidden
+                <div className="flex gap-2 mb-6" aria-label={`${stars} out of 3 stars`}>
+                    {[1, 2, 3].map((s) => (
+                        <span
+                            key={s}
+                            className={[
+                                "text-4xl transition-all duration-300 drop-shadow-sm",
+                                s <= stars ? "opacity-100 scale-110" : "opacity-25 grayscale",
+                            ].join(" ")}
+                            aria-hidden
+                        >
+                            ⭐
+                        </span>
+                    ))}
+                </div>
+
+                <p className="text-[#945F95] text-lg font-bold italic mb-8 max-w-xs leading-snug">
+                    "{message}"
+                </p>
+
+                <div className="grid grid-cols-3 gap-3 w-full mb-8">
+                    <StatCard label="Accuracy" value={`${accuracy}%`} icon="🎯" color="#58CC02" />
+                    <StatCard label="XP Earned" value={`+${xpEarned}`} icon="⭐" color="#FFC800" />
+                    <StatCard label="Words" value={`${wordsCompleted}/${totalWords}`} icon="📝" color="#CE7DA5" />
+                </div>
+
+                <div className="flex flex-col gap-4 w-full">
+                    <button
+                        onClick={onPlayAgain}
+                        className="w-full py-4 rounded-[20px] font-black text-xl text-white outline-none transform transition-transform active:translate-y-1"
+                        style={{ background: "#1CB0F6", borderBottom: "6px solid #1899D6" }}
                     >
-                        ⭐
-                    </span>
-                ))}
-            </div>
+                        Practice Again 🚀
+                    </button>
 
-            {/* Nova's message */}
-            <p className="text-center text-purple-200 text-base italic mb-6 max-w-xs leading-relaxed">
-                &ldquo;{message}&rdquo;
-            </p>
-
-            {/* Stats cards */}
-            <div className="grid grid-cols-3 gap-3 w-full max-w-sm mb-8">
-                <StatCard
-                    label="Accuracy"
-                    value={`${accuracy}%`}
-                    icon="🎯"
-                    color="text-green-300"
-                />
-                <StatCard
-                    label="XP Earned"
-                    value={`+${xpEarned}`}
-                    icon="⭐"
-                    color="text-yellow-300"
-                />
-                <StatCard
-                    label="Words"
-                    value={`${wordsCompleted}/${totalWords}`}
-                    icon="📝"
-                    color="text-purple-300"
-                />
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex flex-col gap-3 w-full max-w-xs">
-                <button
-                    onClick={onPlayAgain}
-                    className={[
-                        "w-full py-4 rounded-2xl font-bold text-lg text-white",
-                        "bg-gradient-to-r from-purple-600 to-violet-600",
-                        "shadow-[0_0_24px_rgba(124,58,237,0.4)]",
-                        "active:scale-95 transition-transform duration-150",
-                    ].join(" ")}
-                >
-                    Practice Again 🚀
-                </button>
-
-                <button
-                    onClick={onDone}
-                    className={[
-                        "w-full py-3 rounded-2xl font-semibold text-base text-purple-300",
-                        "border border-purple-400/30 bg-white/5",
-                        "active:scale-95 transition-transform duration-150",
-                    ].join(" ")}
-                >
-                    I&apos;m Done for Today
-                </button>
+                    <button
+                        onClick={onDone}
+                        className="w-full py-4 rounded-[20px] font-black text-lg text-[#945F95] outline-none transform transition-transform active:translate-y-1 bg-white"
+                        style={{ border: "2px solid rgba(57,0,82,0.1)", borderBottom: "6px solid rgba(57,0,82,0.1)" }}
+                    >
+                        Done for Today
+                    </button>
+                </div>
             </div>
         </div>
     );
 }
 
-function StatCard({
-    label,
-    value,
-    icon,
-    color,
-}: {
-    label: string;
-    value: string;
-    icon: string;
-    color: string;
-}) {
+function StatCard({ label, value, icon, color }: { label: string; value: string; icon: string; color: string; }) {
     return (
-        <div className="flex flex-col items-center gap-1 bg-white/5 rounded-2xl border border-white/10 py-3 px-2">
-            <span className="text-xl" aria-hidden>{icon}</span>
-            <span className={`text-lg font-bold tabular-nums ${color}`}>{value}</span>
-            <span className="text-xs text-purple-400">{label}</span>
+        <div className="flex flex-col items-center gap-1 bg-white rounded-2xl py-3 px-1" style={{ border: "2px solid rgba(57,0,82,0.05)" }}>
+            <span className="text-2xl drop-shadow-sm" aria-hidden>{icon}</span>
+            <span className="text-xl font-black tabular-nums mt-1" style={{ color }}>{value}</span>
+            <span className="text-[0.65rem] uppercase tracking-widest font-black text-[#945F95]">{label}</span>
         </div>
     );
 }

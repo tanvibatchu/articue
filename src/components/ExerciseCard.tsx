@@ -1,17 +1,16 @@
-// ExerciseCard.tsx — A large tappable menu card for the kid exercise home page.
-// Each card represents one exercise mode with an emoji, title, description, and link.
-
+// ExerciseCard.tsx — Gamified, bright, 3D animated exercise menu button.
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 type ExerciseCardProps = {
     href: string;
     emoji: string;
     title: string;
     description: string;
-    gradient: string;   // Tailwind gradient classes
-    badge?: string;     // e.g. "New!" or "Favourite"
+    colorTheme: string;
+    badge?: string;
 };
 
 export default function ExerciseCard({
@@ -19,49 +18,57 @@ export default function ExerciseCard({
     emoji,
     title,
     description,
-    gradient,
+    colorTheme,
     badge,
 }: ExerciseCardProps) {
-    return (
-        <Link href={href} className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded-3xl">
-            <div
-                className={[
-                    "relative flex items-center gap-4 px-5 py-5 rounded-3xl",
-                    "border border-white/10",
-                    "bg-white/5 backdrop-blur-sm",
-                    "shadow-[0_0_20px_rgba(124,58,237,0.1)]",
-                    "transition-all duration-200 active:scale-95",
-                    "hover:bg-white/10 hover:border-purple-400/40 hover:shadow-[0_0_28px_rgba(124,58,237,0.25)]",
-                    "cursor-pointer select-none",
-                ].join(" ")}
-            >
-                {/* Coloured emoji badge */}
-                <div
-                    className={[
-                        "flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-3xl",
-                        gradient,
-                    ].join(" ")}
-                >
-                    {emoji}
-                </div>
+    const [isPressed, setIsPressed] = useState(false);
 
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                        <h2 className="text-base font-bold text-white truncate">{title}</h2>
+    return (
+        <Link 
+            href={href} 
+            className="block w-full focus:outline-none"
+            onPointerDown={() => setIsPressed(true)}
+            onPointerUp={() => setIsPressed(false)}
+            onPointerLeave={() => setIsPressed(false)}
+        >
+            <div
+                className="relative bg-white rounded-[24px] px-5 py-5 transition-transform duration-100 select-none flex items-center justify-between"
+                style={{
+                    border: `2px solid rgba(57, 0, 82, 0.1)`,
+                    borderBottom: isPressed ? `2px solid rgba(57, 0, 82, 0.1)` : `6px solid ${colorTheme}`,
+                    transform: isPressed ? 'translateY(4px)' : 'translateY(0)',
+                }}
+            >
+                <div className="flex items-center gap-4">
+                    {/* Big squircle emoji badge */}
+                    <div
+                        className="flex-shrink-0 w-16 h-16 rounded-[20px] flex items-center justify-center text-4xl shadow-sm"
+                        style={{ background: `${colorTheme}15`, border: `2px solid ${colorTheme}50` }}
+                    >
+                        {emoji}
+                    </div>
+
+                    {/* Text wrapper */}
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <h2 className="text-xl font-black text-[#390052]">{title}</h2>
+                        </div>
+                        <p className="text-[0.9rem] font-bold text-[#945F95] leading-snug">{description}</p>
+                        
                         {badge && (
-                            <span className="flex-shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400/30">
+                            <span 
+                                className="inline-block mt-2 text-[0.7rem] font-black tracking-widest uppercase px-2 py-0.5 rounded-xl bg-[rgba(57,0,82,0.05)] text-[#631D76]"
+                            >
                                 {badge}
                             </span>
                         )}
                     </div>
-                    <p className="text-sm text-purple-300 leading-snug">{description}</p>
                 </div>
 
-                {/* Arrow */}
-                <svg className="flex-shrink-0 w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+                {/* Arrow Caret */}
+                <div className="text-[#945F95] opacity-50 font-black text-2xl pr-2">
+                    ›
+                </div>
             </div>
         </Link>
     );

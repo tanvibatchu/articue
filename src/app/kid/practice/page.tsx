@@ -11,7 +11,8 @@ import XPCounter from "@/components/XPCounter";
 import StreakBadge from "@/components/StreakBadge";
 import SessionSummary from "@/components/SessionSummary";
 import type { PhonemeResult } from "@/lib/gemini";
-import { speakAsNova, stopCurrentAudio } from "@/lib/elevenlabs";
+import { generateSessionCelebration } from "@/lib/gemini";
+import { speakAsNova, demonstrateWord, stopCurrentAudio } from "@/lib/elevenlabs";
 import { startListening, stopListening } from "@/lib/speechCapture";
 import { getSessionWords, TargetSound, WordEntry } from "@/lib/wordBanks";
 import { startSession, recordAttempt, endSession, AttemptData, SessionWithId } from "@/lib/sessionManager";
@@ -235,6 +236,13 @@ export default function PracticePage() {
     }
     return (
         <>
+                        <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+                body {
+                    background: #F9F4F1;
+                    font-family: 'Nunito', sans-serif;
+                }
+            `}</style>
             <CelebrationBurst active={showCelebration} />
             {showSummary && (
                 <SessionSummary
@@ -244,42 +252,42 @@ export default function PracticePage() {
                     onDone={() => { window.location.href = "/kid"; }}
                 />
             )}
-            <main className="min-h-screen flex flex-col items-center px-4 pt-4 pb-8 gap-4 max-w-sm mx-auto">
+            <main className="min-h-screen flex flex-col items-center px-4 md:px-8 pt-6 md:pt-12 pb-24 gap-6 md:gap-12 max-w-3xl md:max-w-5xl mx-auto w-full md:px-12">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Link href="/kid" className="text-purple-400 hover:text-white transition-colors text-2xl" aria-label="Back to menu">Back</Link>
+                        <Link href="/kid" className="text-[#945F95] hover:text-[#390052] transition-colors text-2xl" aria-label="Back to menu">Back</Link>
                         <StreakBadge streak={profile.streak} />
                     </div>
                     <XPCounter xp={xp} />
                 </div>
-                <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-1.5 border border-white/10">
-                    <span className="text-sm font-semibold text-purple-200">Word Practice</span>
-                    <span className="text-xs text-purple-400 uppercase tracking-widest ml-1">- {SOUND_LABELS[activeSound]} sound</span>
+                <div className="flex items-center gap-2 bg-white rounded-[16px] px-4 py-1.5 border-2 border-[rgba(57,0,82,0.1)] border-b-[4px] border-b-[rgba(57,0,82,0.1)]">
+                    <span className="text-sm font-black text-[#945F95]">Word Practice</span>
+                    <span className="text-xs text-[#945F95] uppercase tracking-widest ml-1">- {SOUND_LABELS[activeSound]} sound</span>
                 </div>
                 <div className="flex-shrink-0 mt-1">
                     <Nova state={novaState} size="lg" />
                 </div>
                 <div className="text-center min-h-14 flex flex-col items-center justify-center gap-1 px-4">
-                    {phase === "greeting" && <p className="text-purple-200 text-lg">Nova is getting ready...</p>}
+                    {phase === "greeting" && <p className="text-[#945F95] text-lg">Nova is getting ready...</p>}
                     {phase === "demonstrating" && (
                         <>
-                            <p className="text-purple-300 text-sm uppercase tracking-widest">Nova is saying...</p>
-                            <p className="text-white text-xl font-semibold">Can you say... <span className="text-purple-300 font-bold">{words[wordIndex]?.word}</span>?</p>
+                            <p className="text-[#945F95] text-sm uppercase tracking-widest">Nova is saying...</p>
+                            <p className="text-[#390052] text-xl font-black">Can you say... <span className="text-[#945F95] font-black">{words[wordIndex]?.word}</span>?</p>
                         </>
                     )}
                     {phase === "waiting" && (
                         <>
-                            <p className="text-purple-300 text-sm uppercase tracking-widest">Your turn!</p>
-                            <p className="text-white text-xl font-semibold">Say: <span className="text-purple-300 font-bold">{words[wordIndex]?.word}</span></p>
+                            <p className="text-[#945F95] text-sm uppercase tracking-widest">Your turn!</p>
+                            <p className="text-[#390052] text-xl font-black">Say: <span className="text-[#945F95] font-black">{words[wordIndex]?.word}</span></p>
                         </>
                     )}
-                    {phase === "recording" && <p className="text-green-300 text-lg font-medium">Listening...</p>}
-                    {phase === "analyzing" && <p className="text-purple-200 text-lg">Nova is thinking...</p>}
-                    {phase === "celebrating" && <p className="text-yellow-300 text-xl font-bold">{lastResult?.feedback ?? "Amazing!"}</p>}
+                    {phase === "recording" && <p className="text-[#58CC02] text-lg font-medium">Listening...</p>}
+                    {phase === "analyzing" && <p className="text-[#945F95] text-lg">Nova is thinking...</p>}
+                    {phase === "celebrating" && <p className="text-[#FFC800] text-xl font-black">{lastResult?.feedback ?? "Amazing!"}</p>}
                     {phase === "redirecting" && (
                         <>
-                            <p className="text-purple-200 text-lg">{lastResult?.feedback ?? "Ooh so close!"}</p>
-                            <p className="text-purple-300 text-base">Try again: <span className="font-bold text-white">{words[wordIndex]?.word}</span></p>
+                            <p className="text-[#945F95] text-lg">{lastResult?.feedback ?? "Ooh so close!"}</p>
+                            <p className="text-[#945F95] text-base">Try again: <span className="font-black text-[#390052]">{words[wordIndex]?.word}</span></p>
                         </>
                     )}
                 </div>
@@ -296,18 +304,18 @@ export default function PracticePage() {
                 {(phase === "redirecting" || attempts > 0) && (
                     <div className="flex gap-2 items-center">
                         {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
-                            <div key={i} className={"w-2.5 h-2.5 rounded-full transition-all duration-300 " + (i < attempts ? "bg-purple-400" : "bg-white/15")} />
+                            <div key={i} className={"w-2.5 h-2.5 rounded-full transition-all duration-300 " + (i < attempts ? "bg-[#CE7DA5]" : "bg-white/15")} />
                         ))}
-                        <span className="text-xs text-purple-400 ml-1">attempts</span>
+                        <span className="text-xs text-[#945F95] ml-1">attempts</span>
                     </div>
                 )}
                 <MouthDiagram sound={activeSound !== "fluency" ? activeSound : null} visible={showMouthDiagram} />
                 <div className="flex-1" />
                 <div className="flex flex-col items-center gap-2 pb-2">
-                    <p className="text-xs text-purple-400">Word {Math.min(completedWords + 1, TOTAL_WORDS)} of {TOTAL_WORDS}</p>
+                    <p className="text-xs text-[#945F95]">Word {Math.min(completedWords + 1, TOTAL_WORDS)} of {TOTAL_WORDS}</p>
                     <div className="flex gap-2">
                         {Array.from({ length: TOTAL_WORDS }).map((_, i) => (
-                            <div key={i} className={"w-3 h-3 rounded-full transition-all duration-500 " + (i < completedWords ? "bg-purple-400" : i === completedWords ? "bg-purple-600" : "bg-white/10")} />
+                            <div key={i} className={"w-3 h-3 rounded-full transition-all duration-500 " + (i < completedWords ? "bg-[#CE7DA5]" : i === completedWords ? "bg-[#CE7DA5] scale-125" : "bg-[rgba(57,0,82,0.1)]")} />
                         ))}
                     </div>
                 </div>

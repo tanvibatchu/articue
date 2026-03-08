@@ -14,6 +14,7 @@ import XPCounter from "@/components/XPCounter";
 import StreakBadge from "@/components/StreakBadge";
 import SessionSummary from "@/components/SessionSummary";
 import { speakAsNova, stopCurrentAudio } from "@/lib/elevenlabs";
+import { generateSessionCelebration } from "@/lib/gemini";
 import { TargetSound } from "@/lib/wordBanks";
 import { semanticData } from "@/lib/semanticData";
 import { startSession, recordAttempt, endSession, AttemptData, SessionWithId } from "@/lib/sessionManager";
@@ -276,6 +277,13 @@ export default function SoundHuntPage() {
 
     return (
         <>
+                        <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+                body {
+                    background: #F9F4F1;
+                    font-family: 'Nunito', sans-serif;
+                }
+            `}</style>
             <CelebrationBurst active={showCelebration} />
             {showSummary && (
                 <SessionSummary
@@ -291,21 +299,21 @@ export default function SoundHuntPage() {
                 />
             )}
 
-            <main className="min-h-screen flex flex-col items-center px-4 pt-4 pb-8 gap-4 max-w-sm mx-auto">
+            <main className="min-h-screen flex flex-col items-center px-4 md:px-8 pt-6 md:pt-12 pb-24 gap-6 md:gap-12 max-w-3xl md:max-w-5xl mx-auto w-full md:px-12">
                 {/* Top bar */}
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Link href="/kid" className="text-purple-400 hover:text-white transition-colors text-2xl" aria-label="Back">←</Link>
+                        <Link href="/kid" className="text-[#945F95] hover:text-[#390052] transition-colors text-2xl" aria-label="Back">←</Link>
                         <StreakBadge streak={streak} />
                     </div>
                     <XPCounter xp={xp} />
                 </div>
 
                 {/* Mode pill — with SFA label for practitioners */}
-                <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-1.5 border border-white/10">
+                <div className="flex items-center gap-2 bg-white rounded-[16px] px-4 py-1.5 border-2 border-[rgba(57,0,82,0.1)] border-b-[4px] border-b-[rgba(57,0,82,0.1)]">
                     <span className="text-lg">📍</span>
-                    <span className="text-sm font-semibold text-purple-200">Sound Hunt</span>
-                    <span className="text-xs text-blue-400 ml-1">SFA · Aphasia</span>
+                    <span className="text-sm font-black text-[#945F95]">Sound Hunt</span>
+                    <span className="text-xs text-[#1CB0F6] ml-1">SFA · Aphasia</span>
                 </div>
 
                 {/* Nova */}
@@ -315,23 +323,23 @@ export default function SoundHuntPage() {
 
                 {/* Instruction */}
                 <div className="text-center px-4">
-                    <p className="text-purple-300 text-sm uppercase tracking-widest mb-1">Where is the sound?</p>
-                    <p className="text-white text-xl font-semibold">
-                        Where is the <span className="text-purple-300 font-black">{activeSound.toUpperCase()}</span> sound in…
+                    <p className="text-[#945F95] text-sm uppercase tracking-widest mb-1">Where is the sound?</p>
+                    <p className="text-[#390052] text-xl font-black">
+                        Where is the <span className="text-[#945F95] font-black">{activeSound.toUpperCase()}</span> sound in…
                     </p>
                 </div>
 
                 {/* Word display */}
                 {words[index] && (
-                    <div className="flex flex-col items-center gap-3 px-8 py-5 rounded-3xl bg-white/5 backdrop-blur-md border border-purple-400/30 shadow-[0_0_24px_rgba(124,58,237,0.2)] w-full max-w-xs animate-[fade-slide-in_0.4s_ease-out_forwards]">
+                    <div className="flex flex-col items-center gap-3 px-8 py-5 rounded-3xl bg-white border-2 border-[rgba(57,0,82,0.1)] border-b-[6px] border-b-[#1CB0F6] w-full max-w-sm md:max-w-lg animate-[fade-slide-in_0.4s_ease-out_forwards]">
                         <span className="text-7xl">{words[index].emoji}</span>
-                        <p className="text-3xl font-bold text-white tracking-wide">{words[index].word}</p>
+                        <p className="text-3xl font-black text-[#390052] tracking-wide">{words[index].word}</p>
                     </div>
                 )}
 
                 {/* SFA Hint system — Semantic Feature Analysis for Aphasia word retrieval */}
                 {words[index] && (
-                    <div className="w-full max-w-xs flex flex-col gap-2">
+                    <div className="w-full max-w-sm md:max-w-lg flex flex-col gap-2">
                         {/* Hint reveals: category → function → attribute */}
                         {hintLevel > 0 && (
                             <div className="bg-blue-900/30 border border-blue-400/30 rounded-2xl px-4 py-2 animate-[fade-in_0.3s_ease-out]">
@@ -349,7 +357,7 @@ export default function SoundHuntPage() {
                         {hintLevel < 3 && phase === "showing" && (
                             <button
                                 onClick={() => setHintLevel(h => h + 1)}
-                                className="text-xs text-blue-400 hover:text-blue-200 flex items-center gap-1 justify-center py-1 transition-colors"
+                                className="text-xs text-[#1CB0F6] hover:text-blue-200 flex items-center gap-1 justify-center py-1 transition-colors"
                             >
                                 💡 {hintLevel === 0 ? "Give me a hint" : "More hint"}
                             </button>
@@ -358,7 +366,7 @@ export default function SoundHuntPage() {
                 )}
 
                 {/* Answer buttons */}
-                <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
+                <div className="flex flex-col gap-3 w-full max-w-sm md:max-w-lg mt-2">
                     {(["start", "middle", "end"] as const).map((pos) => (
                         <ChoiceButton
                             key={pos}
@@ -379,11 +387,11 @@ export default function SoundHuntPage() {
 
                 {/* Progress dots */}
                 <div className="flex flex-col items-center gap-2 pb-2">
-                    <p className="text-xs text-purple-400">Round {Math.min(index + 1, TOTAL_ROUNDS)} of {TOTAL_ROUNDS}</p>
+                    <p className="text-xs text-[#945F95]">Round {Math.min(index + 1, TOTAL_ROUNDS)} of {TOTAL_ROUNDS}</p>
                     <div className="flex gap-2">
                         {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
                             <div key={i} className={["w-3 h-3 rounded-full transition-all duration-500",
-                                i < index ? "bg-purple-400" : i === index ? "bg-purple-600 ring-2 ring-purple-400/50" : "bg-white/10"
+                                i < index ? "bg-[#CE7DA5]" : i === index ? "bg-[#CE7DA5] scale-125 " : "bg-[rgba(57,0,82,0.1)]"
                             ].join(" ")} />
                         ))}
                     </div>

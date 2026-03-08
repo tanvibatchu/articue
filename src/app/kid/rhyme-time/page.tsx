@@ -219,6 +219,13 @@ export default function RhymeTimePage() {
 
     return (
         <>
+                        <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+                body {
+                    background: #F9F4F1;
+                    font-family: 'Nunito', sans-serif;
+                }
+            `}</style>
             <CelebrationBurst active={showCelebration} />
             {showSummary && (
                 <SessionSummary
@@ -236,20 +243,20 @@ export default function RhymeTimePage() {
                 />
             )}
 
-            <main className="min-h-screen flex flex-col items-center px-4 pt-4 pb-8 gap-4 max-w-sm mx-auto">
+            <main className="min-h-screen flex flex-col items-center px-4 md:px-8 pt-6 md:pt-12 pb-24 gap-6 md:gap-12 max-w-3xl md:max-w-5xl mx-auto w-full md:px-12">
                 {/* Top bar */}
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Link href="/kid" className="text-purple-400 hover:text-white transition-colors text-2xl" aria-label="Back">←</Link>
+                        <Link href="/kid" className="text-[#945F95] hover:text-[#390052] transition-colors text-2xl" aria-label="Back">←</Link>
                         <StreakBadge streak={streak} />
                     </div>
                     <XPCounter xp={xp} />
                 </div>
 
                 {/* Mode pill */}
-                <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-1.5 border border-white/10">
+                <div className="flex items-center gap-2 bg-white rounded-[16px] px-4 py-1.5 border-2 border-[rgba(57,0,82,0.1)] border-b-[4px] border-b-[rgba(57,0,82,0.1)]">
                     <span className="text-lg">🎵</span>
-                    <span className="text-sm font-semibold text-purple-200">Rhyme Time</span>
+                    <span className="text-sm font-black text-[#945F95]">Rhyme Time</span>
                 </div>
 
                 {/* Nova */}
@@ -259,22 +266,22 @@ export default function RhymeTimePage() {
 
                 {/* Instruction */}
                 <div className="text-center px-4">
-                    <p className="text-purple-300 text-sm uppercase tracking-widest mb-1">Find the rhyme!</p>
-                    <p className="text-white text-xl font-semibold">
+                    <p className="text-[#945F95] text-sm uppercase tracking-widest mb-1">Find the rhyme!</p>
+                    <p className="text-[#390052] text-xl font-black">
                         Which word rhymes with…
                     </p>
                 </div>
 
                 {/* Target word card */}
                 {rounds[index] && (
-                    <div className="flex flex-col items-center gap-3 px-8 py-5 rounded-3xl bg-white/5 backdrop-blur-md border border-purple-400/30 shadow-[0_0_24px_rgba(124,58,237,0.2)] w-full max-w-xs animate-[fade-slide-in_0.4s_ease-out_forwards]">
+                    <div className="flex flex-col items-center gap-3 px-8 py-5 rounded-3xl bg-white border-2 border-[rgba(57,0,82,0.1)] border-b-[6px] border-b-[#1CB0F6] w-full max-w-sm md:max-w-lg animate-[fade-slide-in_0.4s_ease-out_forwards]">
                         <span className="text-7xl">{rounds[index].emoji}</span>
-                        <p className="text-3xl font-bold text-white tracking-wide">{rounds[index].word}</p>
+                        <p className="text-3xl font-black text-[#390052] tracking-wide">{rounds[index].word}</p>
                     </div>
                 )}
 
                 {/* Choice buttons */}
-                <div className="flex flex-col gap-3 w-full max-w-xs mt-2">
+                <div className="flex flex-col gap-3 w-full max-w-sm md:max-w-lg mt-2">
                     {choices.map((word) => (
                         <ChoiceButton
                             key={word}
@@ -295,11 +302,11 @@ export default function RhymeTimePage() {
 
                 {/* Progress dots */}
                 <div className="flex flex-col items-center gap-2 pb-2">
-                    <p className="text-xs text-purple-400">Round {Math.min(index + 1, TOTAL_ROUNDS)} of {TOTAL_ROUNDS}</p>
+                    <p className="text-xs text-[#945F95]">Round {Math.min(index + 1, TOTAL_ROUNDS)} of {TOTAL_ROUNDS}</p>
                     <div className="flex gap-2">
                         {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
                             <div key={i} className={["w-3 h-3 rounded-full transition-all duration-500",
-                                i < index ? "bg-purple-400" : i === index ? "bg-purple-600 ring-2 ring-purple-400/50" : "bg-white/10"
+                                i < index ? "bg-[#CE7DA5]" : i === index ? "bg-[#CE7DA5] scale-125 " : "bg-[rgba(57,0,82,0.1)]"
                             ].join(" ")} />
                         ))}
                     </div>

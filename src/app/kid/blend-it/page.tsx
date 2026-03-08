@@ -310,6 +310,13 @@ export default function BlendItPage() {
 
     return (
         <>
+                        <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+                body {
+                    background: #F9F4F1;
+                    font-family: 'Nunito', sans-serif;
+                }
+            `}</style>
             <CelebrationBurst active={showCelebration} />
             {showSummary && (
                 <SessionSummary
@@ -328,20 +335,20 @@ export default function BlendItPage() {
                 />
             )}
 
-            <main className="min-h-screen flex flex-col items-center px-4 pt-4 pb-8 gap-4 max-w-sm mx-auto">
+            <main className="min-h-screen flex flex-col items-center px-4 md:px-8 pt-6 md:pt-12 pb-24 gap-6 md:gap-12 max-w-3xl md:max-w-5xl mx-auto w-full md:px-12">
                 {/* Top bar */}
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Link href="/kid" className="text-purple-400 hover:text-white transition-colors text-2xl" aria-label="Back">←</Link>
+                        <Link href="/kid" className="text-[#945F95] hover:text-[#390052] transition-colors text-2xl" aria-label="Back">←</Link>
                         <StreakBadge streak={streak} />
                     </div>
                     <XPCounter xp={xp} />
                 </div>
 
                 {/* Mode pill — with DTTC label for practitioners */}
-                <div className="flex items-center gap-2 bg-white/5 rounded-full px-4 py-1.5 border border-white/10">
+                <div className="flex items-center gap-2 bg-white rounded-[16px] px-4 py-1.5 border-2 border-[rgba(57,0,82,0.1)] border-b-[4px] border-b-[rgba(57,0,82,0.1)]">
                     <span className="text-lg">🔤</span>
-                    <span className="text-sm font-semibold text-purple-200">Blend It!</span>
+                    <span className="text-sm font-black text-[#945F95]">Blend It!</span>
                     <span className="text-xs text-emerald-400 ml-1">DTTC · Apraxia</span>
                 </div>
 
@@ -349,8 +356,8 @@ export default function BlendItPage() {
                 <div className="flex items-center gap-2 bg-white/5 rounded-2xl p-1 border border-white/10 self-center">
                     <button
                         onClick={() => setRateMode("slow")}
-                        className={["flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-semibold transition-all duration-200",
-                            rateMode === "slow" ? "bg-emerald-600 text-white shadow-[0_0_10px_rgba(52,211,153,0.4)]" : "text-purple-300 hover:text-white"
+                        className={["flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-black transition-all duration-200",
+                            rateMode === "slow" ? "bg-[#58CC02] scale-125 text-[#390052] shadow-[0_0_10px_rgba(52,211,153,0.4)]" : "text-[#945F95] hover:text-[#390052]"
                         ].join(" ")}
                         title="Slow: longer pauses between sounds (DTTC Level 1)"
                     >
@@ -358,8 +365,8 @@ export default function BlendItPage() {
                     </button>
                     <button
                         onClick={() => setRateMode("fast")}
-                        className={["flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-semibold transition-all duration-200",
-                            rateMode === "fast" ? "bg-emerald-600 text-white shadow-[0_0_10px_rgba(52,211,153,0.4)]" : "text-purple-300 hover:text-white"
+                        className={["flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-black transition-all duration-200",
+                            rateMode === "fast" ? "bg-[#58CC02] scale-125 text-[#390052] shadow-[0_0_10px_rgba(52,211,153,0.4)]" : "text-[#945F95] hover:text-[#390052]"
                         ].join(" ")}
                         title="Fast: short transitions between sounds (ReST training)"
                     >
@@ -374,10 +381,10 @@ export default function BlendItPage() {
 
                 {/* Instruction */}
                 <div className="text-center px-4">
-                    <p className="text-purple-300 text-sm uppercase tracking-widest mb-1">
+                    <p className="text-[#945F95] text-sm uppercase tracking-widest mb-1">
                         {phase === "ready" ? "Ready to listen?" : phase === "revealing" ? "Listen to each sound…" : phase === "waiting" ? "Now blend them!" : phase === "recording" ? "I'm listening…" : phase === "celebrating" ? (lastResult?.feedback ?? "Amazing!") : ""}
                     </p>
-                    <p className="text-white text-xl font-semibold">
+                    <p className="text-[#390052] text-xl font-black">
                         {phase === "ready" && "Tap Start to hear the sounds 🔊"}
                         {phase === "waiting" && "Say the whole word! 🎤"}
                         {phase === "analyzing" && "Nova is thinking… 💭"}
@@ -387,7 +394,7 @@ export default function BlendItPage() {
 
                 {/* Segment tiles */}
                 {currentWord && (
-                    <div className="flex flex-col items-center gap-4 px-6 py-5 rounded-3xl bg-white/5 backdrop-blur-md border border-purple-400/30 w-full max-w-xs">
+                    <div className="flex flex-col items-center gap-4 px-6 py-5 rounded-3xl bg-white/5 backdrop-blur-md border border-purple-400/30 w-full max-w-sm md:max-w-lg">
                         <span className="text-6xl">{currentWord.emoji}</span>
 
                         {/* Segment display */}
@@ -396,8 +403,8 @@ export default function BlendItPage() {
                                 <div key={i} className={[
                                     "px-4 py-2 rounded-xl text-xl font-black transition-all duration-500",
                                     i < revealedSegments
-                                        ? "bg-purple-600/60 text-white border border-purple-400/60 shadow-[0_0_12px_rgba(124,58,237,0.4)]"
-                                        : "bg-white/5 text-white/20 border border-white/10",
+                                        ? "bg-[#CE7DA5] scale-125/60 text-[#390052] border border-purple-400/60 shadow-[0_0_12px_rgba(124,58,237,0.4)]"
+                                        : "bg-white/5 text-[#390052]/20 border border-white/10",
                                 ].join(" ")}>
                                     {i < revealedSegments ? seg : "·"}
                                 </div>
@@ -406,7 +413,7 @@ export default function BlendItPage() {
 
                         {/* Full display string (shown after all revealed) */}
                         {revealedSegments >= currentWord.segments.length && (
-                            <p className="text-purple-300 text-lg font-mono tracking-widest animate-[fade-in_0.4s_ease-out]">
+                            <p className="text-[#945F95] text-lg font-mono tracking-widest animate-[fade-in_0.4s_ease-out]">
                                 {currentWord.display}
                             </p>
                         )}
@@ -417,7 +424,7 @@ export default function BlendItPage() {
                 {phase === "ready" && (
                     <button
                         onClick={revealWord}
-                        className="mt-2 px-8 py-4 bg-purple-600 hover:bg-purple-500 active:scale-95 text-white text-lg font-bold rounded-2xl shadow-lg shadow-purple-500/40 transition-all duration-200 flex items-center gap-2"
+                        className="mt-2 px-8 py-4 bg-[#CE7DA5] scale-125 hover:bg-purple-500 active:scale-95 text-[#390052] text-lg font-black rounded-2xl shadow-lg shadow-purple-500/40 transition-all duration-200 flex items-center gap-2"
                     >
                         🔊 Start
                     </button>
@@ -435,7 +442,7 @@ export default function BlendItPage() {
                         {phase === "waiting" && (
                             <button
                                 onClick={revealWord}
-                                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold text-purple-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200"
+                                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-black text-[#945F95] hover:text-[#390052] bg-white/5 hover:bg-[rgba(57,0,82,0.1)] border border-white/10 transition-all duration-200"
                             >
                                 🔁 Replay sounds
                             </button>
@@ -459,11 +466,11 @@ export default function BlendItPage() {
 
                 {/* Progress dots */}
                 <div className="flex flex-col items-center gap-2 pb-2">
-                    <p className="text-xs text-purple-400">Word {Math.min(index + 1, TOTAL_WORDS)} of {TOTAL_WORDS}</p>
+                    <p className="text-xs text-[#945F95]">Word {Math.min(index + 1, TOTAL_WORDS)} of {TOTAL_WORDS}</p>
                     <div className="flex gap-2">
                         {Array.from({ length: TOTAL_WORDS }).map((_, i) => (
                             <div key={i} className={["w-3 h-3 rounded-full transition-all duration-500",
-                                i < index ? "bg-purple-400" : i === index ? "bg-purple-600 ring-2 ring-purple-400/50" : "bg-white/10"
+                                i < index ? "bg-[#CE7DA5]" : i === index ? "bg-[#CE7DA5] scale-125 " : "bg-[rgba(57,0,82,0.1)]"
                             ].join(" ")} />
                         ))}
                     </div>

@@ -1,20 +1,11 @@
-// XPCounter.tsx — Displays current session XP with a floating +10 animation on earn.
-// Gold colored, shown in the top-right corner of the practice page.
-
+// XPCounter.tsx — Displays current session XP with a solid gold styling.
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 
-type XPCounterProps = {
-    xp: number;
-};
+type FloatingLabel = { id: number; amount: number; };
 
-type FloatingLabel = {
-    id: number;
-    amount: number;
-};
-
-export default function XPCounter({ xp }: XPCounterProps) {
+export default function XPCounter({ xp }: { xp: number }) {
     const prevXpRef = useRef(xp);
     const [floats, setFloats] = useState<FloatingLabel[]>([]);
 
@@ -23,32 +14,34 @@ export default function XPCounter({ xp }: XPCounterProps) {
         if (diff > 0) {
             const id = Date.now();
             setFloats((f) => [...f, { id, amount: diff }]);
-            // Remove after animation finishes
-            setTimeout(() => {
-                setFloats((f) => f.filter((x) => x.id !== id));
-            }, 1300);
+            setTimeout(() => setFloats((f) => f.filter((x) => x.id !== id)), 1300);
         }
         prevXpRef.current = xp;
     }, [xp]);
 
     return (
-        <div className="relative flex items-center gap-1.5 select-none">
-            {/* Floating +XP labels */}
+        <div className="relative select-none">
             {floats.map((f) => (
                 <span
                     key={f.id}
-                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-sm font-bold text-yellow-300 animate-[float-up_1.2s_ease-out_forwards] pointer-events-none whitespace-nowrap"
-                    aria-hidden
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-sm font-black text-[#FFC800] animate-[float-up_1.2s_ease-out_forwards] pointer-events-none"
+                    style={{ textShadow: "0 2px 4px rgba(255, 200, 0, 0.4)" }}
                 >
-                    +{f.amount} XP
+                    +{f.amount}
                 </span>
             ))}
 
-            {/* XP badge */}
-            <div className="flex items-center gap-1 bg-yellow-500/15 border border-yellow-400/30 rounded-full px-3 py-1">
-                <span className="text-base leading-none">⭐</span>
-                <span className="text-sm font-bold text-yellow-300 tabular-nums">
-                    {xp} XP
+            <div 
+                className="flex items-center rounded-[16px] px-4 py-2"
+                style={{ 
+                    background: "white", 
+                    border: "2px solid rgba(57, 0, 82, 0.1)",
+                    borderBottom: "4px solid #FFC800" /* Solid gold */
+                }}
+            >
+                <span className="text-xl leading-none mr-2 drop-shadow-sm">⭐</span>
+                <span className="text-lg font-black text-[#FFC800] tabular-nums tracking-wide">
+                    {xp}
                 </span>
             </div>
         </div>

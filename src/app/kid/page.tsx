@@ -1,6 +1,6 @@
 // app/kid/page.tsx — Exercise menu home for ArtiCue kid-side.
 // Shows Nova greeting + 5 exercise mode cards with condition labels for practitioners/parents.
-// Condition labels help SLPs and parents choose the right exercise for their child's needs.
+// Gamified, Duolingo-inspired Light Theme Edition ☀️
 
 "use client";
 
@@ -17,7 +17,7 @@ type ChildProfile = {
 };
 
 const GREETINGS = [
-    "What do you want to practise today?",
+    "What do you want to play today?",
     "Ready for some speech fun?",
     "Let's get those sounds perfect!",
     "Pick an exercise and let's go!",
@@ -25,7 +25,7 @@ const GREETINGS = [
 
 export default function KidMenuPage() {
     const [profile, setProfile] = useState<ChildProfile>({ name: "Maya", streak: 3, xp: 0 });
-    const [greeting, setGreeting] = useState(GREETINGS[0]);
+    const [greeting, setGreeting] = useState(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
 
     useEffect(() => {
         fetch("/api/profile")
@@ -39,88 +39,97 @@ export default function KidMenuPage() {
                 });
             })
             .catch(() => { });
-        setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
     }, []);
 
     return (
-        <main className="min-h-screen flex flex-col items-center px-4 pt-4 pb-8 gap-5 max-w-sm mx-auto">
+        <>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+                body {
+                    background: #F9F4F1; /* Parchment */
+                    font-family: 'Nunito', sans-serif;
+                }
+            `}</style>
+            <main className="min-h-screen flex flex-col items-center px-4 md:px-8 pt-6 md:pt-12 pb-24 gap-6 md:gap-12 max-w-3xl md:max-w-5xl mx-auto w-full md:px-12">
 
-            {/* Top bar */}
-            <div className="w-full flex items-center justify-between">
-                <StreakBadge streak={profile.streak} />
-                <XPCounter xp={profile.xp} />
-            </div>
-
-            {/* Nova + greeting */}
-            <div className="flex flex-col items-center gap-3 mt-2">
-                <Nova state="idle" size="lg" />
-                <div className="text-center">
-                    <p className="text-purple-300 text-sm uppercase tracking-widest mb-1">Hi, {profile.name}! 👋</p>
-                    <p className="text-white text-xl font-bold">{greeting}</p>
+                {/* Top bar */}
+                <div className="w-full flex items-center justify-between">
+                    <StreakBadge streak={profile.streak} />
+                    <XPCounter xp={profile.xp} />
                 </div>
-            </div>
 
-            {/* Divider */}
-            <div className="w-full h-px bg-white/5" />
+                {/* Nova + greeting */}
+                <div className="flex flex-col items-center gap-4 mt-4 w-full bg-white border-2 border-[rgba(57,0,82,0.1)] border-b-8 border-b-[rgba(57,0,82,0.1)] p-6 rounded-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#CE7DA5] opacity-10 rounded-full blur-2xl pointer-events-none" />
+                    <Nova state="idle" size="lg" />
+                    <div className="text-center relative z-10">
+                        <p className="text-[#945F95] text-xs font-black uppercase tracking-[0.2em] mb-1">Hi, {profile.name}! 👋</p>
+                        <p className="text-[#390052] text-2xl font-black leading-tight">{greeting}</p>
+                    </div>
+                </div>
 
-            {/* Exercise cards — each labelled with the SLP condition it targets */}
-            <div className="flex flex-col gap-3 w-full">
+                {/* Exercise cards */}
+                <div className="w-full mt-2">
+                    <h2 className="text-xl md:text-2xl font-black text-[#390052] tracking-tight ml-2 mb-4">Today&apos;s Exercises</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full">
 
-                {/* Apraxia + Dysarthria — motor imitation with cueing levels */}
-                <ExerciseCard
-                    href="/kid/practice"
-                    emoji="🎤"
-                    title="Word Practice"
-                    description="Say words with Nova — guided cueing levels help with motor planning"
-                    gradient="bg-gradient-to-br from-purple-600 to-violet-700"
-                    badge="Apraxia · Dysarthria"
-                />
+                    {/* Apraxia + Dysarthria */}
+                    <ExerciseCard
+                        href="/kid/practice"
+                        emoji="🎤"
+                        title="Word Practice"
+                        description="Say words with Nova"
+                        colorTheme="#CE7DA5" /* Peony */
+                        badge="Apraxia"
+                    />
 
-                {/* Aphasia — phonological isolation, + SFA semantic hints */}
-                <ExerciseCard
-                    href="/kid/sound-hunt"
-                    emoji="📍"
-                    title="Sound Hunt"
-                    description="Find where the sound hides — with picture & meaning hints"
-                    gradient="bg-gradient-to-br from-blue-600 to-indigo-700"
-                    badge="Aphasia"
-                />
+                    {/* Aphasia */}
+                    <ExerciseCard
+                        href="/kid/sound-hunt"
+                        emoji="📍"
+                        title="Sound Hunt"
+                        description="Find where the sound hides"
+                        colorTheme="#1CB0F6" /* Blue */
+                        badge="Aphasia"
+                    />
 
-                {/* Apraxia — syllable-by-syllable blending with rate control (DTTC + ReST) */}
-                <ExerciseCard
-                    href="/kid/blend-it"
-                    emoji="🔤"
-                    title="Blend It!"
-                    description="Hear each sound, then say the whole word — slow or fast practice"
-                    gradient="bg-gradient-to-br from-emerald-600 to-teal-700"
-                    badge="Apraxia ★ Best"
-                />
+                    {/* Apraxia (DTTC) */}
+                    <ExerciseCard
+                        href="/kid/blend-it"
+                        emoji="🔤"
+                        title="Blend It!"
+                        description="Hear each sound, then say the word"
+                        colorTheme="#58CC02" /* Green */
+                        badge="Apraxia ★ Best"
+                    />
 
-                {/* Aphasia — rhyme awareness, phonological access */}
-                <ExerciseCard
-                    href="/kid/rhyme-time"
-                    emoji="🎵"
-                    title="Rhyme Time"
-                    description="Pick the rhyming word — builds sound awareness for word retrieval"
-                    gradient="bg-gradient-to-br from-rose-500 to-pink-700"
-                    badge="Aphasia"
-                />
+                    {/* Aphasia - Rhyming */}
+                    <ExerciseCard
+                        href="/kid/rhyme-time"
+                        emoji="🎵"
+                        title="Rhyme Time"
+                        description="Pick the rhyming word"
+                        colorTheme="#FF9600" /* Streak/Orange */
+                        badge="Aphasia"
+                    />
 
-                {/* Dysarthria — LSVT LOUD vocal intensity training */}
-                <ExerciseCard
-                    href="/kid/speak-up"
-                    emoji="🔊"
-                    title="Speak Up!"
-                    description="Say it as LOUD and clear as you can — trains vocal strength"
-                    gradient="bg-gradient-to-br from-sky-500 to-blue-700"
-                    badge="Dysarthria · LSVT"
-                />
-            </div>
+                    {/* Dysarthria - LSVT */}
+                    <ExerciseCard
+                        href="/kid/speak-up"
+                        emoji="🔊"
+                        title="Speak Up!"
+                        description="Say it as LOUD as you can"
+                        colorTheme="#631D76" /* Velvet */
+                        badge="Dysarthria"
+                    />
+                    </div>
+                </div>
 
-            {/* Practitioner tip */}
-            <p className="text-xs text-purple-500 text-center mt-auto pt-2">
-                SLP tip: Use <span className="text-purple-400">Blend It!</span> for Apraxia · <span className="text-purple-400">Sound Hunt</span> for Aphasia · <span className="text-purple-400">Speak Up!</span> for Dysarthria
-            </p>
-        </main>
+                {/* Practitioner tip */}
+                <p className="text-[0.65rem] uppercase tracking-widest font-black text-[#945F95] text-center mt-8 pt-4 border-t-2 border-[rgba(57,0,82,0.1)] w-full max-w-[280px]">
+                    SLP TIPS: <span className="text-[#58CC02]">Blend It!</span> (Apraxia) · <span className="text-[#1CB0F6]">Sound Hunt</span> (Aphasia) · <span className="text-[#631D76]">Speak Up!</span> (Dysarthria)
+                </p>
+            </main>
+        </>
     );
 }
