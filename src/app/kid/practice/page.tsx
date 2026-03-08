@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CelebrationBurst from "@/components/CelebrationBurst";
 import MicButton from "@/components/MicButton";
+import AudioControls from "@/components/AudioControls";
 import MouthDiagram from "@/components/MouthDiagram";
 import Nova from "@/components/Nova";
 import SessionSummary from "@/components/SessionSummary";
@@ -216,10 +217,10 @@ export default function PracticePage() {
       setProfile((currentProfile) =>
         currentProfile
           ? {
-              ...currentProfile,
-              streak: updatedStreak,
-              totalXP: currentProfile.totalXP + earnedXp,
-            }
+            ...currentProfile,
+            streak: updatedStreak,
+            totalXP: currentProfile.totalXP + earnedXp,
+          }
           : currentProfile
       );
     },
@@ -499,12 +500,15 @@ export default function PracticePage() {
           />
         ) : null}
 
-        <MicButton
-          disabled={!["waiting", "recording"].includes(phase)}
-          isRecording={phase === "recording"}
-          onStart={handleMicStart}
-          onStop={handleMicStop}
-        />
+        <div className="flex flex-col items-center gap-4">
+          <MicButton
+            disabled={!["waiting", "recording"].includes(phase)}
+            isRecording={phase === "recording"}
+            onStart={handleMicStart}
+            onStop={handleMicStop}
+          />
+          <AudioControls disabled={!["waiting", "recording"].includes(phase)} />
+        </div>
 
         {attemptsForWord > 0 ? (
           <div className="flex items-center gap-2">

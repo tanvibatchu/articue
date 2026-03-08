@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CelebrationBurst from "@/components/CelebrationBurst";
 import ChoiceButton from "@/components/ChoiceButton";
 import MicButton from "@/components/MicButton";
+import AudioControls from "@/components/AudioControls";
 import Nova from "@/components/Nova";
 import SessionSummary from "@/components/SessionSummary";
 import StreakBadge from "@/components/StreakBadge";
@@ -207,10 +208,10 @@ export default function RhymeTimePage() {
       setProfile((currentProfile) =>
         currentProfile
           ? {
-              ...currentProfile,
-              streak: updatedStreak,
-              totalXP: currentProfile.totalXP + earnedXp,
-            }
+            ...currentProfile,
+            streak: updatedStreak,
+            totalXP: currentProfile.totalXP + earnedXp,
+          }
           : currentProfile
       );
     },
@@ -544,12 +545,15 @@ export default function RhymeTimePage() {
           })}
         </div>
 
-        <MicButton
-          disabled={!["waiting", "recording"].includes(phase)}
-          isRecording={phase === "recording"}
-          onStart={handleMicStart}
-          onStop={handleMicStop}
-        />
+        <div className="flex flex-col items-center gap-4">
+          <MicButton
+            disabled={!["waiting", "recording"].includes(phase)}
+            isRecording={phase === "recording"}
+            onStart={handleMicStart}
+            onStop={handleMicStop}
+          />
+          <AudioControls disabled={!["waiting", "recording"].includes(phase)} />
+        </div>
 
         {attemptsForWord > 0 ? (
           <div className="flex items-center gap-2">
