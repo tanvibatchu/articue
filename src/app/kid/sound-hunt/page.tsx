@@ -113,7 +113,7 @@ const POSITION_LABELS: Record<Position, string> = {
 const SPOKEN_SOUND_LABELS: Record<TargetSound, string> = {
   fluency: "target",
   l: "lll",
-  r: "rrr",
+  r: "arr",
   s: "sss",
   th: "th",
 };
@@ -293,6 +293,7 @@ export default function SoundHuntPage() {
           age: currentProfile.age,
           audio: capture.blob,
           targetSound: activeSoundRef.current,
+          transcript: capture.transcript,
           word: currentRound.word,
         });
 
@@ -306,7 +307,7 @@ export default function SoundHuntPage() {
           correct: normalizedResult.correct,
           score: normalizedResult.score,
           substitution: normalizedResult.substitution,
-          transcript: "[audio capture]",
+          transcript: capture.transcript || "[audio capture]",
           word: currentRound.word,
         };
 

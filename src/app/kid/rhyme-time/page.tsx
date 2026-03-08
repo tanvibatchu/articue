@@ -236,6 +236,7 @@ export default function RhymeTimePage() {
           age: currentProfile.age,
           audio: capture.blob,
           targetSound: activeSoundRef.current,
+          transcript: capture.transcript,
           word: currentRound.correct,
         });
 
@@ -249,7 +250,7 @@ export default function RhymeTimePage() {
           correct: normalizedResult.correct,
           score: normalizedResult.score,
           substitution: normalizedResult.substitution,
-          transcript: "[audio capture]",
+          transcript: capture.transcript || "[audio capture]",
           word: currentRound.correct,
         };
 

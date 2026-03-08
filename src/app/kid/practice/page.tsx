@@ -60,7 +60,7 @@ const TOTAL_WORDS = 8;
 const SOUND_LABELS: Record<TargetSound, string> = {
   fluency: "smooth speech",
   l: "L",
-  r: "R",
+  r: "arr",
   s: "S",
   th: "TH",
 };
@@ -156,7 +156,11 @@ export default function PracticePage() {
         setAttemptsForWord(0);
       }
 
-      await speakAsNova(`Listen to me say ${nextWord.word}. ${nextWord.word}.`);
+      await speakAsNova(`Listen to me say ${nextWord.word}.`);
+      if (!isFlowActive(flowId)) return;
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      if (!isFlowActive(flowId)) return;
+      await speakAsNova(nextWord.word);
       if (!isFlowActive(flowId)) return;
 
       setNovaState("idle");
@@ -241,6 +245,7 @@ export default function PracticePage() {
           age: currentProfile.age,
           audio: capture.blob,
           targetSound: activeSoundRef.current,
+          transcript: capture.transcript,
           word: currentWord.word,
         });
 
@@ -254,7 +259,7 @@ export default function PracticePage() {
           correct: normalizedResult.correct,
           score: normalizedResult.score,
           substitution: normalizedResult.substitution,
-          transcript: "[audio capture]",
+          transcript: capture.transcript || "[audio capture]",
           word: currentWord.word,
         };
 

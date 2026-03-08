@@ -8,7 +8,7 @@ import type {
 export type { PhonemeResult };
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const MODEL = "gemini-1.5-flash";
+const MODEL = "gemini-2.5-flash";
 
 type GeminiTextPart = { text: string };
 type GeminiInlineDataPart = {
@@ -163,18 +163,65 @@ export async function analyzePhoneme(
       : wordOrOptions;
 
   const prompt = [
-    "You are a pediatric speech-language pathologist assistant.",
-    `Child age: ${payload.age}`,
-    `Target sound: ${payload.targetSound}`,
-    `Target word: ${payload.word}`,
-    `What the child said: ${payload.transcript}`,
+    "You are a pediatric speech-language pathologist (SLP) scoring a child's pronunciation attempt.",
+    `Child age: ${payload.age} years old`,
+    `Target sound: /${payload.targetSound}/`,
+    `Target word: "${payload.word}"`,
+    `What the child said (speech-to-text transcript): "${payload.transcript}"`,
+    "",
+    "SCORING GUIDELINES for pediatric SLP:",
+    "- Children's pronunciation is naturally imprecise. Grade on a curve appropriate for the child's age.",
+    `- A ${payload.age}-year-old is held to a lower standard than a 10-year-old. Ages 4-6 should pass with any recognizable approximation of the target sound.`,
+    "- 'correct' should be true if a real SLP would consider this a reasonable attempt for the child's age — not just perfect adult pronunciation.",
+    "- Near-correct approximations (e.g. slight distortions, reduced precision) count as correct.",
+    "- For the /th/ sound specifically: dental approximations like 'd', 'f', or 'v' substitutions are very common developmentally and should NOT cause failure for children under 8. Accept 'th' attempts where the child clearly tried even if imperfect.",
+    "- For /r/ sound: do not require a perfect retroflex 'r'. A clear attempt at the /r/ sound even if slightly distorted counts as correct for ages under 9.",
+    "- If the transcript shows the correct word was said even imperfectly, lean toward correct=true.",
+    "- Only return correct=false if the target sound is clearly missing or heavily substituted with a very different sound in a way that would concern a real SLP.",
+    "- Do NOT be so lenient that any random word passes. The target word must be at least approximately recognizable.",
+    "",
+    "Respond in JSON only, no other text:",
+    "{",
+    '  "correct": boolean,',
+    '  "score": number (0-100, where 70+ means passing for this child\'s age),',
+    '  "substitution": string or null (what sound the child used instead, e.g. "w for r"),',
+    '  "feedback": string (max 12 words, warm and encouraging, no negativity, no "wrong"),',
+    '  "mouthCue": string (one short sentence about tongue or lip placement, child-friendly),',
+    '  "tryAgain": boolean (true only if clearly needs another attempt)',
+    "}",
+  ].join("\n");
+
+  const raw = await callGemini([{ text: prompt }]);
+  return normalizePhonemeResult(parseGeminiJson<PhonemeResult>(raw));
+}
+
+// Stricter analysis for Speak Up mode — requires the target word to be recognizable
+export async function analyzeVoiceAttempt(input: {
+  age: number;
+  targetSound: string;
+  transcript: string;
+  word: string;
+}): Promise<PhonemeResult> {
+  const prompt = [
+    "You are a pediatric speech-language pathologist scoring a child's voice clarity exercise.",
+    `Child age: ${input.age} years old`,
+    `Target word to say: "${input.word}"`,
+    `What the child said (speech-to-text transcript): "${input.transcript}"`,
+    "",
+    "SCORING RULES for this voice exercise:",
+    `- The child MUST have attempted to say the target word "${input.word}". If the transcript shows a completely different word, unrelated sounds, or is blank/unclear, return correct=false.`,
+    "- Filler words (e.g. 'um', 'uh', 'hi', 'okay'), single syllables that don't match, or whispered/inaudible attempts must not pass.",
+    "- The target word must be recognizable in the transcript — it does not need to be perfect but must be at least approximately the right word.",
+    "- If the word is present and reasonably clear, return correct=true. Age-appropriate pronunciation variations are fine.",
+    "- The goal is voice clarity and volume, not phoneme perfection.",
+    "",
     "Respond in JSON only, no other text:",
     "{",
     '  "correct": boolean,',
     '  "score": number (0-100),',
     '  "substitution": string or null,',
-    '  "feedback": string (max 12 words, child-friendly, encouraging),',
-    '  "mouthCue": string (one sentence about tongue/lip placement),',
+    '  "feedback": string (max 12 words, warm and encouraging),',
+    '  "mouthCue": string (one short child-friendly sentence about using a strong clear voice),',
     '  "tryAgain": boolean',
     "}",
   ].join("\n");
@@ -182,6 +229,7 @@ export async function analyzePhoneme(
   const raw = await callGemini([{ text: prompt }]);
   return normalizePhonemeResult(parseGeminiJson<PhonemeResult>(raw));
 }
+
 
 export async function generateSessionCelebration(
   sound: string,

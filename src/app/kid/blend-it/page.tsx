@@ -55,7 +55,7 @@ const TOTAL_WORDS = 6;
 const SOUND_LABELS: Record<TargetSound, string> = {
   fluency: "smooth speech",
   l: "L",
-  r: "R",
+  r: "arr",
   s: "S",
   th: "TH",
 };
@@ -269,6 +269,7 @@ export default function BlendItPage() {
           age: currentProfile.age,
           audio: capture.blob,
           targetSound: activeSoundRef.current,
+          transcript: capture.transcript,
           word: currentWord.word,
         });
 
@@ -282,7 +283,7 @@ export default function BlendItPage() {
           correct: normalizedResult.correct,
           score: normalizedResult.score,
           substitution: normalizedResult.substitution,
-          transcript: "[audio capture]",
+          transcript: capture.transcript || "[audio capture]",
           word: currentWord.word,
         };
 

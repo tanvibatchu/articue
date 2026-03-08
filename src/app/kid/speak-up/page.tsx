@@ -225,6 +225,7 @@ export default function SpeakUpPage() {
           age: currentProfile.age,
           audio: capture.blob,
           targetSound: "voice",
+          transcript: capture.transcript,
           word: currentWord.word,
         });
 
@@ -238,7 +239,7 @@ export default function SpeakUpPage() {
           correct: normalizedResult.correct,
           score: normalizedResult.score,
           substitution: normalizedResult.substitution,
-          transcript: "[audio capture]",
+          transcript: capture.transcript || "[audio capture]",
           word: currentWord.word,
         };
 

@@ -60,6 +60,7 @@ export async function submitAudioForAnalysis(input: {
   age: number;
   audio: Blob;
   targetSound: string;
+  transcript?: string;
   word: string;
 }): Promise<PhonemeResult> {
   const formData = new FormData();
@@ -74,6 +75,11 @@ export async function submitAudioForAnalysis(input: {
   formData.append("age", String(input.age));
   formData.append("targetSound", input.targetSound);
   formData.append("word", input.word);
+
+  // Forward transcript when available so the server can prefer text analysis
+  if (input.transcript) {
+    formData.append("transcript", input.transcript);
+  }
 
   const response = await fetch("/api/analyze", {
     method: "POST",

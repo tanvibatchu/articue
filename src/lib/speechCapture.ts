@@ -3,19 +3,29 @@
 export type SpeechCaptureResult = {
   blob: Blob;
   mimeType: string;
+  transcript: string;
 };
 
 type ResultHandler = (result: SpeechCaptureResult) => void;
 type ErrorHandler = (message: string) => void;
+
+// Use a plain object type to avoid referencing the SpeechRecognition global in an interface
+type RecognitionInstance = {
+  abort: () => void;
+  start: () => void;
+  stop: () => void;
+};
 
 type CaptureState = {
   chunks: BlobPart[];
   onResult: ResultHandler;
   onError: ErrorHandler;
   recorder: MediaRecorder;
+  recognition: RecognitionInstance | null;
   shouldEmit: boolean;
   stream: MediaStream;
   token: number;
+  transcript: string;
 };
 
 const MIME_TYPE_CANDIDATES = [
@@ -47,6 +57,14 @@ function pickMimeType(): string {
 function cleanupCapture(target: CaptureState): void {
   stopTracks(target.stream);
 
+  if (target.recognition) {
+    try {
+      target.recognition.abort();
+    } catch {
+      /* ignore */
+    }
+  }
+
   if (activeCapture?.token === target.token) {
     activeCapture = null;
   }
@@ -68,6 +86,49 @@ function cancelActiveCapture(): void {
   }
 
   cleanupCapture(target);
+}
+
+function getSpeechRecognitionCtor(): (new () => RecognitionInstance & {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  continuous: boolean;
+  onresult: ((event: { results: { [index: number]: { [index: number]: { transcript: string } | undefined } | undefined } }) => void) | null;
+  onerror: (() => void) | null;
+}) | null {
+  if (typeof window === "undefined") return null;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const w = window as any;
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+  return (w.SpeechRecognition ?? w.webkitSpeechRecognition) as ReturnType<typeof getSpeechRecognitionCtor>;
+}
+
+function startSpeechRecognition(capture: CaptureState): void {
+  const Ctor = getSpeechRecognitionCtor();
+  if (!Ctor) return;
+
+  try {
+    const recognition = new Ctor();
+    recognition.lang = "en-CA";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+
+    recognition.onresult = (event) => {
+      const text = event.results?.[0]?.[0]?.transcript;
+      if (typeof text === "string" && text.trim()) {
+        capture.transcript = text.trim().toLowerCase();
+      }
+    };
+
+    // Silently swallow recognition errors — transcript stays as empty string
+    recognition.onerror = () => { /* fall back to audio analysis */ };
+
+    recognition.start();
+    capture.recognition = recognition;
+  } catch {
+    /* speech recognition unavailable — fall back to audio analysis */
+  }
 }
 
 export async function startListening(
@@ -127,12 +188,17 @@ export async function startListening(
       onResult,
       onError,
       recorder,
+      recognition: null,
       shouldEmit: true,
       stream,
       token,
+      transcript: "",
     };
 
     activeCapture = capture;
+
+    // Start Web Speech API in parallel for transcript capture
+    startSpeechRecognition(capture);
 
     recorder.addEventListener("dataavailable", (event) => {
       if (event.data.size > 0) {
@@ -152,6 +218,7 @@ export async function startListening(
         const mimeType = recorder.mimeType || preferredMimeType || "audio/webm";
         const blob = new Blob(capture.chunks, { type: mimeType });
         const shouldEmit = capture.shouldEmit;
+        const transcript = capture.transcript;
 
         cleanupCapture(capture);
 
@@ -162,7 +229,7 @@ export async function startListening(
           return;
         }
 
-        capture.onResult({ blob, mimeType });
+        capture.onResult({ blob, mimeType, transcript });
       },
       { once: true }
     );
@@ -195,6 +262,15 @@ export function stopListening(options: { cancel?: boolean } = {}): void {
 
   if (options.cancel) {
     target.shouldEmit = false;
+  }
+
+  // Stop speech recognition first so it has a chance to fire onresult
+  if (target.recognition) {
+    try {
+      target.recognition.stop();
+    } catch {
+      /* ignore */
+    }
   }
 
   if (target.recorder.state === "inactive") {
