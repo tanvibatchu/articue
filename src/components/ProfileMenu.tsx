@@ -103,6 +103,7 @@ export default function ProfileMenu({ onClose, readOnly = false }: ProfileMenuPr
                 background: "#FFFFFF",
                 borderRadius: 24, padding: 32,
                 width: "100%", maxWidth: 480,
+                maxHeight: "90vh", overflowY: "auto",
                 boxShadow: "0 24px 80px rgba(57,0,82,0.2), 0 0 40px rgba(148, 95, 149, 0.2)",
                 color: "#390052",
                 display: "flex", flexDirection: "column", gap: 24
