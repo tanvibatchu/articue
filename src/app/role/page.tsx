@@ -30,36 +30,36 @@ export default function RolePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen bg-[#F9F4F1] flex items-center justify-center">
+        <div className="text-[#390052] text-xl font-bold tracking-widest uppercase">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#F9F4F1] flex items-center justify-center px-4">
       <div className="text-center space-y-8 max-w-md w-full">
         <div className="space-y-3">
-          <p className="text-sm uppercase tracking-[0.3em] text-purple-200/80 font-semibold">
+          <p className="text-sm uppercase tracking-[0.3em] text-[#945F95] font-black">
             Welcome back
           </p>
-          <h1 className="text-4xl md:text-5xl font-bold text-white">
+          <h1 className="text-4xl md:text-5xl font-black text-[#390052]">
             Choose your view
           </h1>
-          <p className="text-lg text-white/80">
+          <p className="text-lg font-bold text-[#945F95]">
             Continue as a parent or switch to the child view.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={() => setShowGate(true)}
-            className="px-6 py-4 bg-white text-[#302b63] font-semibold rounded-lg shadow-lg shadow-purple-500/40 hover:-translate-y-0.5 transition-all duration-200"
+            className="px-6 py-4 bg-white text-[#945F95] border-2 border-[rgba(57,0,82,0.1)] font-semibold rounded-lg shadow-lg shadow-[rgba(57,0,82,0.05)] hover:-translate-y-0.5 transition-all duration-200"
           >
             Parent
           </button>
           <Link
             href="/kid"
-            className="px-6 py-4 bg-purple-600 text-white font-semibold rounded-lg shadow-lg shadow-purple-500/60 hover:bg-purple-700 hover:-translate-y-0.5 transition-all duration-200"
+            className="px-6 py-4 bg-[#CE7DA5] text-white font-semibold rounded-lg shadow-lg shadow-[#CE7DA5]/40 hover:bg-[#b0678b] hover:-translate-y-0.5 transition-all duration-200"
           >
             Child
           </Link>

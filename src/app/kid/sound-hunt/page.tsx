@@ -11,6 +11,7 @@ import SessionSummary from "@/components/SessionSummary";
 import StreakBadge from "@/components/StreakBadge";
 import WordCard from "@/components/WordCard";
 import XPCounter from "@/components/XPCounter";
+import LoadingScreen from "@/components/LoadingScreen";
 import {
   ChildProfile,
   fetchCelebrationMessage,
@@ -494,11 +495,7 @@ export default function SoundHuntPage() {
   }, []);
 
   if (!profile || xp === null) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F9F4F1]">
-        <div className="text-5xl">⭐</div>
-      </main>
-    );
+    return <LoadingScreen />;
   }
 
   const currentRound = rounds[roundIndex];
