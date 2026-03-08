@@ -30,6 +30,10 @@ export interface SessionData {
   targetSound: string;
   attempts: Attempt[];
   averageAccuracy: number;
+  exerciseType?: string;
+  xpEarned?: number;
+  wordsCompleted?: number;
+  totalWords?: number;
 }
 
 export interface Session {

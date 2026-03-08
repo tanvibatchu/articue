@@ -33,6 +33,10 @@ export function recordAttempt(session: SessionWithId, attempt: Attempt): Session
 
 export async function endSession(
   session: SessionWithId | string,
+  extraData?: {
+    exerciseType?: string;
+    totalWords?: number;
+  },
   attemptsArg?: Attempt[]
 ): Promise<{ xpEarned: number; sessionData: SessionData; averageAccuracy: number }> {
   let attempts: Attempt[];
@@ -60,6 +64,10 @@ export async function endSession(
     targetSound: sound,
     attempts,
     averageAccuracy: Math.round(averageAccuracy * 100) / 100,
+    exerciseType: extraData?.exerciseType ?? "practice",
+    xpEarned,
+    wordsCompleted: attempts.length,
+    totalWords: extraData?.totalWords ?? attempts.length,
   };
 
   return { xpEarned, sessionData, averageAccuracy: Math.round(averageAccuracy) };

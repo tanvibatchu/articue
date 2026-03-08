@@ -1,17 +1,21 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useDashboard } from "@/context/DashboardContext";
 import type { UserMode } from "@/context/DashboardContext";
 
 export default function ModeSwitcher({ compact = false }: { compact?: boolean }) {
-  const { mode, setMode } = useDashboard();
+  const { setMode } = useDashboard();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const activeMode: UserMode = pathname && pathname.toLowerCase().startsWith("/parent") ? "parent" : "kid";
+
   const [confirming, setConfirming] = useState(false);
   const [pendingMode, setPendingMode] = useState<UserMode | null>(null);
 
   function requestSwitch(target: UserMode) {
-    if (target === mode) return;
+    if (target === activeMode) return;
     setPendingMode(target);
     setConfirming(true);
   }
@@ -29,9 +33,9 @@ export default function ModeSwitcher({ compact = false }: { compact?: boolean })
     return (
       <>
         {confirming && <ConfirmDialog mode={pendingMode!} onConfirm={confirmSwitch} onCancel={cancelSwitch} />}
-        <button onClick={() => requestSwitch(mode === "kid" ? "parent" : "kid")}
+        <button onClick={() => requestSwitch(activeMode === "kid" ? "parent" : "kid")}
           style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(57,0,82,0.08)", border: "1.5px solid rgba(57,0,82,0.15)", borderRadius: 20, padding: "5px 12px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700, color: "#390052", fontFamily: "inherit" }}>
-          {mode === "kid" ? "👨‍👩‍👧 Parent View" : "🧒 Kid View"}
+          {activeMode === "kid" ? "👨‍👩‍👧 Parent View" : "🧒 Kid View"}
         </button>
       </>
     );
@@ -42,7 +46,7 @@ export default function ModeSwitcher({ compact = false }: { compact?: boolean })
       {confirming && <ConfirmDialog mode={pendingMode!} onConfirm={confirmSwitch} onCancel={cancelSwitch} />}
       <div style={{ display: "flex", alignItems: "center", background: "rgba(57,0,82,0.06)", border: "1.5px solid rgba(57,0,82,0.12)", borderRadius: 24, padding: 4, gap: 2 }}>
         {(["kid", "parent"] as UserMode[]).map((m) => (
-          <button key={m} onClick={() => requestSwitch(m)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 20, border: "none", cursor: m === mode ? "default" : "pointer", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, background: m === mode ? (m === "kid" ? "#CE7DA5" : "#631D76") : "transparent", color: m === mode ? "#fff" : "#945F95" }}>
+          <button key={m} onClick={() => requestSwitch(m)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 16px", borderRadius: 20, border: "none", cursor: m === activeMode ? "default" : "pointer", fontFamily: "inherit", fontSize: "0.85rem", fontWeight: 700, background: m === activeMode ? (m === "kid" ? "#CE7DA5" : "#631D76") : "transparent", color: m === activeMode ? "#fff" : "#945F95" }}>
             {m === "kid" ? "🧒 Kid" : "👨‍👩‍👧 Parent"}
           </button>
         ))}

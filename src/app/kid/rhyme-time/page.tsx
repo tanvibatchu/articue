@@ -173,7 +173,10 @@ export default function RhymeTimePage() {
       setNovaState("celebrating");
 
       const session = sessionRef.current ?? startSession(profileRef.current?.name ?? "kid", activeSoundRef.current);
-      const summary = await endSession(session);
+      const summary = await endSession(session, {
+        exerciseType: "rhyme-time",
+        totalWords: roundsRef.current.length,
+      });
       const accuracy = summary.averageAccuracy;
       const fallbackMessage = getFallbackSummaryMessage(accuracy);
       const celebrationMessage = await fetchCelebrationMessage({

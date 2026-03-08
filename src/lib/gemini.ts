@@ -143,11 +143,11 @@ export async function analyzePhoneme(
   wordOrOptions:
     | string
     | {
-        age: number;
-        targetSound: string;
-        transcript: string;
-        word: string;
-      },
+      age: number;
+      targetSound: string;
+      transcript: string;
+      word: string;
+    },
   transcript?: string,
   targetSound?: string,
   age?: number
@@ -155,11 +155,11 @@ export async function analyzePhoneme(
   const payload =
     typeof wordOrOptions === "string"
       ? {
-          age: age ?? 6,
-          targetSound: targetSound ?? "",
-          transcript: transcript ?? "",
-          word: wordOrOptions,
-        }
+        age: age ?? 6,
+        targetSound: targetSound ?? "",
+        transcript: transcript ?? "",
+        word: wordOrOptions,
+      }
       : wordOrOptions;
 
   const prompt = [

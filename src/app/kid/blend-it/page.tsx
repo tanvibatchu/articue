@@ -206,7 +206,10 @@ export default function BlendItPage() {
             setNovaState("celebrating");
 
             const session = sessionRef.current ?? startSession(profileRef.current?.name ?? "kid", activeSoundRef.current);
-            const summary = await endSession(session);
+            const summary = await endSession(session, {
+                exerciseType: "blend-it",
+                totalWords: wordsRef.current.length,
+            });
             const accuracy = summary.averageAccuracy;
             const fallbackMessage = getFallbackSummaryMessage(accuracy);
             const celebrationMessage = await fetchCelebrationMessage({

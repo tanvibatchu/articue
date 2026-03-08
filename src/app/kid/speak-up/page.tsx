@@ -162,7 +162,10 @@ export default function SpeakUpPage() {
             setNovaState("celebrating");
 
             const session = sessionRef.current ?? startSession(profileRef.current?.name ?? "kid", "voice");
-            const summary = await endSession(session);
+            const summary = await endSession(session, {
+                exerciseType: "speak-up",
+                totalWords: words.length,
+            });
             const accuracy = summary.averageAccuracy;
             const fallbackMessage = getFallbackSummaryMessage(accuracy);
             const celebrationMessage = await fetchCelebrationMessage({
