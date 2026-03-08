@@ -23,6 +23,14 @@ export default function RolePage() {
       .then((data) => {
         if (!data.profile) {
           router.replace('/onboarding');
+        } else {
+          // Secure PIN Reveal check
+          const searchParams = new URLSearchParams(window.location.search);
+          if (searchParams.get('action') === 'view_pin' && data.profile.parentPin) {
+            alert(`Your Parent PIN is: ${data.profile.parentPin}\n\nPlease store it somewhere safe.`);
+            // Clean the URL parameter immediately
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
         }
       })
       .catch(() => router.replace('/'));
