@@ -1,92 +1,191 @@
-## Articue
-**Bridging the gap in Canadian speech therapy**
+# ArtiCue
+### Closing the gap in Canadian speech therapy.
 
-In Canada, the path to clear communication is often blocked by a system stretched to its breaking point. We are currently facing a national shortage of Speech-Language Pathologists (SLPs), resulting in waitlists that routinely last 12 to 24 months, and in many rural or remote regions, even longer. Beyond the wait times, the financial burden is staggering; for families without private insurance, the cost of ongoing private therapy sessions is often prohibitive, making professional speech care an exclusive luxury rather than a public health right.
+> Because Canadian kids can't wait 3 years for a speech therapist.
+---
 
-We built Articue to democratize access to this care. We realized that while we cannot instantly increase the number of SLPs in the country, we can extend their reach. Articue serves as a digital bridge, allowing patients to practice and track their progress between sessions, reducing the dependency on frequent, costly in-person clinical visits.
+## The Problem
 
-## Installation
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+1 in 5 Canadian preschoolers has a speech or language impediment. The average wait for a government-funded speech-language pathologist is 8 months. Private therapy costs up to **$4,000/month**. Rural and remote communities have almost no access at all.
 
-**Getting Started**
+While children wait, they fall behind in school, lose confidence, and miss the critical window where early intervention matters most.
 
-First, run the development server:
+ArtiCue bridges that gap.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## What It Does
+
+ArtiCue is an AI-powered speech therapy companion that gives Canadian children daily, clinically-grounded practice at home -- no waitlist, no appointment required.
+
+**For kids:**
+- Practice with Nova, a friendly animated coach powered by ElevenLabs
+- 5 clinically-based exercises targeting real phoneme disorders
+- Real-time pronunciation feedback powered by Gemini 2.5 Flash
+- XP, streaks, and celebrations to keep kids engaged
+
+**For parents:**
+- Dashboard with accuracy trends and session history
+- Weekly improvement rate and weeks-to-mastery predictions
+- AI research chatbot backed by peer-reviewed sources from PubMed, Semantic Scholar, and ERIC
+
+---
+
+## Exercises
+
+| Exercise | Clinical Basis |
+|---|---|
+| 🎤 Word Practice | Core articulation therapy |
+| 🔤 Blend It! | DTTC methodology for childhood apraxia |
+| 🎵 Rhyme Time | Phonological awareness development |
+| 📍 Sound Hunt | Semantic feature analysis |
+| 🔊 Speak Up! | LSVT LOUD voice clarity training |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16, TypeScript, Tailwind CSS |
+| AI Analysis | Google Gemini 2.5 Flash |
+| Voice | ElevenLabs |
+| Authentication | Auth0 |
+| Database | Firebase Firestore |
+| Animation | Lottie |
+| Data Viz | Recharts |
+| Research APIs | PubMed, Semantic Scholar, ERIC, OpenAlex |
+| Deployment | Vercel |
+
+---
+
+## Architecture
+
+### Agentic Session Loop
+```
+Child holds mic
+  → MediaRecorder captures raw audio
+  → Audio encoded as base64
+  → POST /api/analyze (Gemini 2.5 Flash via inlineData)
+  → Gemini listens and scores pronunciation
+  → ElevenLabs generates Nova's voice response
+  → nova-speaking browser event fires
+  → Nova's Lottie animation syncs to her voice
+  → Attempt saved to Firebase Firestore
+  → generateSessionCelebration() fires at session end
+  → predictImprovement() calculates mastery timeline
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Gemini Functions
+- `analyzePhoneme()` — age-calibrated phoneme grading with developmental rubrics
+- `analyzePronunciationAudio()` — multimodal: sends raw base64 audio directly to Gemini
+- `analyzeVoiceAttempt()` — volume and clarity scoring for Speak Up! mode
+- `generateSessionCelebration()` — personalised end-of-session message
+- `predictImprovement()` — weekly improvement rate and weeks-to-mastery from session history
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Research Chatbot Pipeline
+```
+Parent question
+  → SLP keyword classifier (rejects off-topic queries)
+  → Firestore cache check
+  → Parallel queries: PubMed + Semantic Scholar + ERIC
+  → OpenAlex fallback if < 2 results
+  → Deduplication and journal-tier filtering
+  → Gemini synthesises only verified abstracts
+  → Cited, parent-friendly answer returned
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-**Learn More**
+## Local Setup
 
-To learn more about Next.js, take a look at the following resources:
+### Prerequisites
+- Node.js 18+
+- npm
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Install
+```bash
+git clone https://github.com/tanvibatchu/articue
+cd articue
+npm install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Environment Variables
+Create a `.env.local` file in the root directory:
 
-**Deploy on Vercel**
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-## 🚀 What it does
-**Articue** is an intelligent, user-friendly platform designed to support the SLP workflow by focusing on home-based practice and progress tracking.
-
-  **Guided Home Practice**: Patients can access interactive modules that allow them to practice articulation exercises with immediate visual cues, making the "gap" between appointments productive rather than passive.
-
-  **Progress Analytics**: Therapists can view trends in patient performance through an intuitive dashboard, helping them adjust therapy plans based on actual data rather than just patient recall.
-
-  **Accessibility-First UI**: Built with clean, high-contrast, and responsive design, ensuring that our interface is easy to navigate for patients of all ages, regardless of their tech-savviness.
-
-## 🛠 Tech Stack
-**Core Technologies**
-
-  **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-
-  **Authentication**: Auth0
-
-  **Database**: Firebase, Firestore
-
-  **AI & Machine Learning**: Google Gemini API, ElevenLabs, Web Speech API
-
-  **Data Visualization**: Recharts
-
-  **UI/UX**: Lottie animations
-
-  **Deployment**: Vercel
-
-## 🏗 Architecture
-
-
-## 🧱 Local Setup
-
-**Environment Variables**
-Create a .env.local file in the root directory:
-
-AUTH0_SECRET=...
+```env
+# Auth0
+AUTH0_SECRET=
 AUTH0_BASE_URL=http://localhost:3000
-AUTH0_ISSUER_BASE_URL=...
-AUTH0_CLIENT_ID=...
-AUTH0_CLIENT_SECRET=...
-FIREBASE_API_KEY=...
-GEMINI_API_KEY=...
-ELEVENLABS_API_KEY=...
+AUTH0_ISSUER_BASE_URL=
+AUTH0_CLIENT_ID=
+AUTH0_CLIENT_SECRET=
+AUTH0_DOMAIN=
 
-## 📝 License
-Distributed under the MIT License.
+# Firebase (Server)
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
 
+# Firebase (Client)
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+
+# AI
+GEMINI_API_KEY=
+NEXT_PUBLIC_GEMINI_API_KEY=
+ELEVENLABS_API_KEY=
+```
+
+### Run
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Auth0 Setup
+
+In your Auth0 application settings, add the following:
+
+- **Allowed Callback URLs:** `http://localhost:3000/api/auth/callback`
+- **Allowed Logout URLs:** `http://localhost:3000`
+- **Allowed Web Origins:** `http://localhost:3000`
+
+For production, replace `http://localhost:3000` with your Vercel deployment URL.
+
+---
+
+## Deployment
+
+Deployed on Vercel. Every push to `main` triggers an automatic redeploy.
+
+Add all environment variables from `.env.local` to your Vercel project settings before deploying.
+
+---
+
+## Team
+
+Built at **Hack Canada** by Paras, Tanvi, Poneesh, and Parneet.
+
+---
+
+## What's Next
+
+- Native iOS app via Capacitor
+- SLP portal for therapists to assign exercises and track patients remotely
+- French Canadian support for Quebec families
+- Offline mode for rural and remote communities
+- Push for provincial health coverage as a recognized digital therapy tool
+
+---
+
+## License
+
+MIT
