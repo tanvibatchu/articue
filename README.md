@@ -1,5 +1,6 @@
 # ArtiCue
 Demo Video: https://youtu.be/nndhehSQGhc
+Devpost: https://devpost.com/software/articue
 
 ### Closing the gap in Canadian speech therapy.
 
